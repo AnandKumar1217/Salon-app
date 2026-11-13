@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Glamora — Salon Booking & Real-time Availability</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4A1E36;
+      --primary-light: #652D4C;
+      --rose: #C88294;
+      --rose-light: #F3E5E8;
+      --background: #FAF7F2;
+      --surface: #FFFFFF;
+      --surface-warm: #F5EFEB;
+      --text-primary: #1F1E1E;
+      --text-secondary: #615B57;
+      --text-tertiary: #9E9690;
+      --border: #E8E0D5;
+      --success: #2E7D32;
+      --whatsapp: #25D366;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--background);
+      color: var(--text-primary);
+      line-height: 1.5;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FAF7F2;
+      font-weight: 800;
+      font-style: italic;
+      font-size: 20px;
+    }
+    .brand-name {
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      color: var(--primary);
+    }
+    .open-app-pill {
+      background: var(--rose-light);
+      color: var(--primary);
+      border: 1px solid var(--rose);
+      padding: 6px 14px;
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+    .hero {
+      position: relative;
+      height: 240px;
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .hero img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .hero-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(31,18,24,0.85) 0%, rgba(31,18,24,0.2) 60%);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 20px;
+      color: #FFFFFF;
+    }
+    .salon-name {
+      font-size: 26px;
+      font-weight: 800;
+      margin-bottom: 4px;
+    }
+    .salon-tagline {
+      font-size: 14px;
+      color: #F0EBE3;
+      margin-bottom: 8px;
+    }
+    .salon-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    .rating-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .booking-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+      margin-bottom: 24px;
+    }
+    .step-title {
+      font-size: 17px;
+      font-weight: 800;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--primary);
+    }
+    .services-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .service-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .service-row.selected {
+      border-color: var(--primary);
+      background: var(--rose-light);
+    }
+    .service-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .service-name {
+      font-weight: 700;
+      font-size: 15px;
+    }
+    .service-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .service-price {
+      font-size: 16px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .date-row {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 24px;
+    }
+    .date-chip {
+      min-width: 70px;
+      padding: 12px 8px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      text-align: center;
+      cursor: pointer;
+      background: var(--surface);
+      transition: all 0.2s;
+    }
+    .date-chip.selected {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+    .date-chip .day { font-size: 11px; text-transform: uppercase; font-weight: 700; }
+    .date-chip .num { font-size: 18px; font-weight: 800; margin: 2px 0; }
+    .date-chip.selected .day, .date-chip.selected .num { color: #FFFFFF; }
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+    .slot-chip {
+      padding: 10px;
+      text-align: center;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--surface);
+      transition: all 0.2s;
+    }
+    .slot-chip.selected {
+      background: var(--primary);
+      color: #FFFFFF;
+      border-color: var(--primary);
+    }
+    .slot-chip.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: var(--surface-warm);
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: inherit;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    .submit-btn {
+      width: 100%;
+      background: var(--primary);
+      color: #FFFFFF;
+      border: none;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 16px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .submit-btn:hover {
+      background: var(--primary-light);
+    }
+    .confirmation-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 32px 20px;
+      text-align: center;
+      display: none;
+    }
+    .check-icon {
+      width: 64px;
+      height: 64px;
+      background: #E8F5E9;
+      color: var(--success);
+      border-radius: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 16px;
+    }
+    .booking-ref {
+      display: inline-block;
+      background: var(--surface-warm);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin: 12px 0 20px;
+      color: var(--primary);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-icon">G</div>
+      <div class="brand-name">GLAMORA</div>
+    </a>
+    <a href="glamora://salon/maison-de-belle" id="appLink" class="open-app-pill">
+      📱 Open in Glamora App
+    </a>
+  </header>
+
+  <div class="container">
+    <!-- Hero Salon Info -->
+    <div class="hero">
+      <img id="salonImage" src="https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=1200&q=80" alt="Salon" />
+      <div class="hero-overlay">
+        <h1 class="salon-name" id="salonName">Maison De Belle</h1>
+        <p class="salon-tagline" id="salonTagline">Luxury Hair Lounge & Aesthetic Bar</p>
+        <div class="salon-meta">
+          <span class="rating-badge">★ 4.9 (428 reviews)</span>
+          <span id="salonAddress">Indiranagar, Bengaluru</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Booking Form Container -->
+    <div id="bookingFormSection" class="booking-card">
+      <!-- 1. Treatment Selection -->
+      <div class="step-title">1. Select Your Treatments</div>
+      <div class="services-list" id="servicesList">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- 2. Date Selection -->
+      <div class="step-title">2. Select Date</div>
+      <div class="date-row" id="dateRow">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- 3. Time Slot -->
+      <div class="step-title">3. Committed Start Time (Live Availability)</div>
+      <div class="slots-grid" id="slotsGrid">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <!-- 4. Customer Details -->
+      <div class="step-title">4. Guest Details</div>
+      <div class="form-group">
+        <label class="form-label">Full Name *</label>
+        <input type="text" class="form-input" id="custName" placeholder="e.g. Natasha Poonawalla" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Mobile Number * (For Instant SMS Confirmation)</label>
+        <input type="tel" class="form-input" id="custPhone" placeholder="e.g. 98450 12345" required />
+      </div>
+
+      <button type="button" class="submit-btn" id="confirmBtn" onclick="submitBooking()">
+        Lock Slot & Confirm Reservation
+      </button>
+    </div>
+
+    <!-- Confirmation View -->
+    <div id="confirmationCard" class="confirmation-card">
+      <div class="check-icon">✓</div>
+      <h2>Appointment Confirmed!</h2>
+      <p style="color: var(--text-secondary); margin-top: 6px;">
+        Staff capacity is reserved. Zero waiting guaranteed.
+      </p>
+
+      <div class="booking-ref" id="confBookingCode">#GLM-84920</div>
+
+      <div style="background: var(--surface-warm); border-radius: 12px; padding: 16px; margin-bottom: 24px; text-align: left;">
+        <p><strong>Salon:</strong> <span id="confSalon">Maison De Belle</span></p>
+        <p><strong>Date & Time:</strong> <span id="confTime">Nov 14, 2026 at 14:30</span></p>
+        <p><strong>Service:</strong> <span id="confService">Signature Haircut & Blowdry</span></p>
+        <p><strong>Customer:</strong> <span id="confCustomer">Guest</span></p>
+      </div>
+
+      <a href="glamora://bookings" class="submit-btn" style="text-decoration: none;">
+        Track in Glamora Android App
+      </a>
+    </div>
+  </div>
+
+  <script>
+    // Configuration: Points to Glamora Backend API (Next.js 14 / MongoDB)
+    const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? 'http://localhost:3001'
+      : window.location.origin;
+
+    let currentSalon = null;
+    let selectedService = null;
+    let selectedDate = new Date().toISOString().split('T')[0];
+    let selectedTime = "14:30";
+
+    async function initPage() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const salonIdParam = urlParams.get('salonId');
+
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/salons`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.salons && data.salons.length > 0) {
+            currentSalon = salonIdParam
+              ? data.salons.find(s => s.id === salonIdParam) || data.salons[0]
+              : data.salons[0];
+          }
+        }
+      } catch (err) {
+        console.warn('Backend API connection notice:', err);
+      }
+
+      // If no salon in database, display clear empty state
+      if (!currentSalon) {
+        document.getElementById('salonName').innerText = 'Glamora Salon Booking';
+        document.getElementById('salonTagline').innerText = 'Online appointments platform';
+        document.getElementById('salonAddress').innerText = 'Pan-India Network';
+        document.getElementById('servicesList').innerHTML = `
+          <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
+            <p style="font-weight: 600; margin-bottom: 6px;">No salons currently available</p>
+            <p style="font-size: 13px;">Please check back shortly or register your salon via the Glamora App.</p>
+          </div>
+        `;
+        document.getElementById('confirmBtn').disabled = true;
+        document.getElementById('confirmBtn').style.opacity = '0.5';
+        return;
+      }
+
+      // Populate Salon Details
+      document.getElementById('salonName').innerText = currentSalon.name;
+      document.getElementById('salonTagline').innerText = currentSalon.tagline || (currentSalon.categories ? currentSalon.categories.join(' • ') : 'Beauty & Wellness Lounge');
+      document.getElementById('salonAddress').innerText = currentSalon.address || currentSalon.area || 'Bengaluru';
+      if (currentSalon.coverImage) {
+        document.getElementById('salonImage').src = currentSalon.coverImage;
+      }
+
+      // 1. Render Services
+      const services = currentSalon.services && currentSalon.services.length > 0
+        ? currentSalon.services
+        : [{ id: 'srv_std', name: 'Standard Consultation & Hair Styling', price: 999, durationMinutes: 45 }];
+
+      selectedService = services[0];
+
+      const srvListEl = document.getElementById('servicesList');
+      srvListEl.innerHTML = services.map((s, idx) => `
+        <div class="service-row ${idx === 0 ? 'selected' : ''}" onclick="selectService('${s.id}')" id="srv_${s.id}">
+          <div class="service-left">
+            <div>
+              <div class="service-name">${s.name}</div>
+              <div class="service-meta">${s.durationMinutes || s.duration || 30} mins • Professional Care</div>
+            </div>
+          </div>
+          <div class="service-price">₹${s.price}</div>
+        </div>
+      `).join('');
+
+      // 2. Render 7 Days
+      const dateRowEl = document.getElementById('dateRow');
+      const dates = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        dates.push({
+          iso: d.toISOString().split('T')[0],
+          day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+          num: d.getDate()
+        });
+      }
+      dateRowEl.innerHTML = dates.map((d, idx) => `
+        <div class="date-chip ${idx === 0 ? 'selected' : ''}" onclick="selectDate('${d.iso}', this)">
+          <div class="day">${d.day}</div>
+          <div class="num">${d.num}</div>
+        </div>
+      `).join('');
+
+      // 3. Render Available Slots
+      renderSlots();
+    }
+
+    function selectService(id) {
+      if (!currentSalon?.services) return;
+      document.querySelectorAll('.service-row').forEach(el => el.classList.remove('selected'));
+      const el = document.getElementById('srv_' + id);
+      if (el) el.classList.add('selected');
+      selectedService = currentSalon.services.find(s => s.id === id);
+    }
+
+    function selectDate(iso, el) {
+      document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedDate = iso;
+      renderSlots();
+    }
+
+    function renderSlots() {
+      const times = ["10:00", "11:30", "13:00", "14:30", "16:00", "17:30", "19:00"];
+      const slotsEl = document.getElementById('slotsGrid');
+      slotsEl.innerHTML = times.map((t, idx) => `
+        <div class="slot-chip ${t === selectedTime ? 'selected' : ''}" onclick="selectSlot('${t}', this)">
+          ${t}
+        </div>
+      `).join('');
+    }
+
+    function selectSlot(time, el) {
+      document.querySelectorAll('.slot-chip').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      selectedTime = time;
+    }
+
+    async function submitBooking() {
+      const name = document.getElementById('custName').value.trim();
+      const phone = document.getElementById('custPhone').value.trim();
+
+      if (!name || phone.length < 10) {
+        alert('Please enter your full name and a valid 10-digit mobile number.');
+        return;
+      }
+
+      if (!currentSalon || !selectedService) {
+        alert('Please select a salon and treatment.');
+        return;
+      }
+
+      const confirmBtn = document.getElementById('confirmBtn');
+      confirmBtn.innerText = 'Locking Slot...';
+      confirmBtn.disabled = true;
+
+      try {
+        const payload = {
+          salonId: currentSalon.id,
+          salonName: currentSalon.name,
+          salonAddress: currentSalon.address || currentSalon.area || '',
+          services: [selectedService],
+          staffId: 'st_unassigned',
+          staffName: 'First Available Specialist',
+          totalDurationMinutes: selectedService.durationMinutes || selectedService.duration || 45,
+          bufferMinutes: 10,
+          date: selectedDate,
+          startTime: selectedTime,
+          customerId: 'cust_web_' + phone.slice(-4),
+          customerName: name,
+          customerPhone: phone,
+          paymentMethod: 'PAY_AT_SALON',
+          paymentStatus: 'PENDING',
+          source: 'WEB'
+        };
+
+        const res = await fetch(`${BACKEND_URL}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.error || `Server responded with ${res.status}`);
+        }
+
+        const data = await res.json();
+        const booking = data.booking || payload;
+
+        document.getElementById('bookingFormSection').style.display = 'none';
+        document.getElementById('confirmationCard').style.display = 'block';
+
+        document.getElementById('confBookingCode').innerText = '#' + (booking.bookingCode || 'GLM-' + Math.floor(10000 + Math.random() * 90000));
+        document.getElementById('confSalon').innerText = currentSalon.name;
+        document.getElementById('confTime').innerText = selectedDate + ' at ' + selectedTime;
+        document.getElementById('confService').innerText = selectedService.name;
+        document.getElementById('confCustomer').innerText = name + ' (' + phone + ')';
+      } catch (err) {
+        alert('Booking could not be completed: ' + err.message);
+      } finally {
+        confirmBtn.innerText = 'Lock Slot & Confirm Reservation';
+        confirmBtn.disabled = false;
+      }
+    }
+
+    initPage();
+  </script>
+</body>
+</html>
+

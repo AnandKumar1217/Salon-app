@@ -1,0 +1,60 @@
+# Root Git Ignore for Glamora Platform
+
+# Credentials & Environment Variables (STRICT EXCLUSION)
+*.env
+*.env.*
+*.env*.local
+.env
+.env.local
+.env.production
+.env.development
+.env.test
+*.local
+admin-web/.env.local
+Galmora/.env
+
+# Allow safe documentation examples only
+!.env.example
+!*/.env.example
+
+# Native Keys, Keystores, Certs, Service Accounts
+*.pem
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*google-service-account*.json
+*service-account*.json
+*firebase-admin*.json
+
+# Dependencies
+node_modules/
+*/node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs & Caches
+.next/
+*/.next/
+dist/
+*/dist/
+build/
+*/build/
+out/
+*/out/
+.expo/
+*/.expo/
+web-build/
+*.tsbuildinfo
+
+# OS & Logs & Temporary Files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
