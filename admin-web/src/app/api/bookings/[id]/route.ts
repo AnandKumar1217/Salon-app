@@ -9,7 +9,7 @@ const ALLOWED_STATUSES = ['CONFIRMED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = req.headers.get('authorization') || '';
@@ -26,7 +26,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized: Invalid or expired token' }, { status: 401 });
     }
 
-    const bookingId = params.id;
+    const { id: bookingId } = await context.params;
     const body = await req.json();
 
     if (!body.status || !ALLOWED_STATUSES.includes(body.status)) {

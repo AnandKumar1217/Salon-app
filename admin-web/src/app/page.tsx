@@ -195,7 +195,7 @@ export default function AdminDashboardPage() {
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-stone-100">
               <div className="flex items-center space-x-2">
                 <Clock className="w-4 h-4 text-stone-400" />
-                <h3 className="text-sm font-semibold text-stone-900">Today's Booking Stream</h3>
+                <h3 className="text-sm font-semibold text-stone-900">Today&apos;s Booking Stream</h3>
               </div>
               <Link href="/bookings" className="text-xs font-semibold text-[#4A154B] hover:underline">
                 View All Bookings

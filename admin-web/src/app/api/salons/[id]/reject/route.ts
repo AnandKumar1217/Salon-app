@@ -6,14 +6,14 @@ import { INITIAL_OWNER_APPLICATIONS } from '@/lib/mock-data';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   const authCheck = await verifyAdminRequest(req, ['SUPER_ADMIN', 'OPERATIONS_ADMIN']);
   if (!authCheck.success) {
     return NextResponse.json({ error: authCheck.error }, { status: authCheck.status });
   }
 
-  const { id } = params;
+  const { id } = await context.params;
   const admin = authCheck.session!;
   const body = await req.json().catch(() => ({}));
   const { reason } = body;

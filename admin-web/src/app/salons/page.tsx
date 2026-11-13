@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Search,
@@ -45,12 +45,7 @@ export default function SalonsManagementPage() {
     process.env.NODE_ENV !== 'production' &&
     process.env.NEXT_PUBLIC_USE_MOCK_FALLBACK === 'true';
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    setIsLoadingData(true);
+  const loadData = useCallback(async () => {
     try {
       const [salonsRes, appsRes] = await Promise.all([
         fetch('/api/salons').catch(() => null),
@@ -70,7 +65,7 @@ export default function SalonsManagementPage() {
       } else if (isMockMode) {
         setApplications(INITIAL_OWNER_APPLICATIONS);
       }
-    } catch (err) {
+    } catch {
       if (isMockMode) {
         setSalons(INITIAL_SALONS);
         setApplications(INITIAL_OWNER_APPLICATIONS);
@@ -78,7 +73,11 @@ export default function SalonsManagementPage() {
     } finally {
       setIsLoadingData(false);
     }
-  };
+  }, [isMockMode]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   // Approve application
   const handleApprove = async () => {

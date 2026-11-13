@@ -4,7 +4,6 @@ const uri = process.env.MONGODB_URI || 'mongodb://localhost:27017/glamora';
 const dbName = process.env.MONGODB_DB_NAME || 'glamora';
 
 declare global {
-  // eslint-disable-next-line no-var
   var _mongoClientPromise: Promise<MongoClient> | undefined;
 }
 

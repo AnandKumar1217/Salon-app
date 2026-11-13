@@ -52,7 +52,7 @@ export const SuspendSalonModal: React.FC<SuspendSalonModalProps> = ({
         <div className="flex items-start space-x-3 p-3.5 bg-rose-50/80 border border-rose-200/90 rounded-xl">
           <ShieldAlert className="w-5 h-5 text-rose-600 mt-0.5 flex-shrink-0" />
           <div className="text-xs text-rose-900 leading-relaxed">
-            Suspension halts public discovery, pauses online appointment booking, and displays a suspension notice on the owner's mobile app. Existing historical booking records are safely preserved.
+            Suspension halts public discovery, pauses online appointment booking, and displays a suspension notice on the owner&apos;s mobile app. Existing historical booking records are safely preserved.
           </div>
         </div>
 

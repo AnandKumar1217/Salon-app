@@ -97,6 +97,7 @@ export default function SalonDetailPage() {
         {/* Salon Header Profile Card */}
         <div className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-sm">
           <div className="h-44 bg-stone-900 relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={salon.coverImage}
               alt={salon.name}

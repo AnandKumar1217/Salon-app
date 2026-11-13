@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isOriginAllowed } from './lib/cors';
 
-export function middleware(req: NextRequest) {
+export function proxy(req: NextRequest) {
   const origin = req.headers.get('origin');
   const method = req.method;
 
@@ -71,6 +71,9 @@ export function middleware(req: NextRequest) {
 
   return response;
 }
+
+export default proxy;
+export const middleware = proxy;
 
 export const config = {
   matcher: '/api/:path*',
