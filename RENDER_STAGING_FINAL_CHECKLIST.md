@@ -44,6 +44,11 @@ When creating the Web Service in the Render Dashboard, enter the following exact
 | **Health Check Path** | `/api/health` | Returns HTTP 200 with DB status |
 | **Auto-Deploy** | `Yes` | Automatically redeploys when commits are pushed |
 
+> [!WARNING]
+> **CRITICAL: Root Directory Must Be `admin-web`**
+> In the Render Dashboard under **Settings > Root Directory**, you MUST specify `admin-web`.
+> If left blank or default (`.`), Render executes `npm ci && npm run build` in the repository root directory where no `package.json` or `package-lock.json` exists, causing npm to display `EUSAGE` and fail the build. A `render.yaml` Blueprint file is now committed at the repository root to automatically declare `rootDir: admin-web`.
+
 ---
 
 ## 3. MANDATORY ENVIRONMENT VARIABLES (RENDER DASHBOARD)

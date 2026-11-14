@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: glamora-backend-api
+    runtime: node
+    rootDir: admin-web
+    buildCommand: npm ci && npm run build
+    startCommand: npx next start -p $PORT
+    healthCheckPath: /api/health
+    region: singapore
+    plan: starter
+    envVars:
+      - key: NODE_VERSION
+        value: 24.22.1
+      - key: NEXT_PUBLIC_USE_MOCK_FALLBACK
+        value: "false"
