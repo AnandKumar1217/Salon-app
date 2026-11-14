@@ -396,10 +396,9 @@
   </div>
 
   <script>
-    // Configuration: Points to Glamora Backend API (Next.js 14 / MongoDB)
-    const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3001'
-      : window.location.origin;
+    // Configuration: Points to Glamora Live Production Backend on Render
+    const urlParams = new URLSearchParams(window.location.search);
+    const BACKEND_URL = urlParams.get('backend') || 'https://salon-app-n7l2.onrender.com';
 
     let currentSalon = null;
     let selectedService = null;
