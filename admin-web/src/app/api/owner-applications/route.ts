@@ -1,11 +1,41 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getMongoOwnerApplications, insertMongoOwnerApplication, insertMongoAuditLog } from '@/lib/mongodb-service';
 import { OwnerApplication } from '@/lib/types';
+import { verifyAdminRequest } from '@/lib/auth-guard';
+import { verifyJwtToken } from '@/lib/jwt-security';
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    const applications = await getMongoOwnerApplications();
-    return NextResponse.json({ success: true, count: applications.length, applications });
+    const authCheck = await verifyAdminRequest(req, ['SUPER_ADMIN', 'OPERATIONS_ADMIN']);
+    if (authCheck.success) {
+      const applications = await getMongoOwnerApplications();
+      return NextResponse.json({ success: true, count: applications.length, applications });
+    }
+
+    // Check if caller is authenticated owner checking their own applications
+    const authHeader = req.headers.get('authorization') || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+    if (token) {
+      try {
+        const caller = verifyJwtToken(token);
+        const callerEmail = caller.email ? String(caller.email).toLowerCase().trim() : '';
+        const callerId = caller.uid || caller.id || '';
+        const all = await getMongoOwnerApplications();
+        const userApps = all.filter(
+          (a) =>
+            (callerEmail && a.ownerEmail?.toLowerCase().trim() === callerEmail) ||
+            (callerId && a.ownerId === callerId)
+        );
+        return NextResponse.json({ success: true, count: userApps.length, applications: userApps });
+      } catch {
+        return NextResponse.json({ error: 'Unauthorized: Invalid token' }, { status: 401 });
+      }
+    }
+
+    return NextResponse.json(
+      { error: authCheck.error || 'Unauthorized: Admin authentication required' },
+      { status: authCheck.status || 401 }
+    );
   } catch (error: any) {
     console.error('API /owner-applications GET error:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch applications' }, { status: 500 });

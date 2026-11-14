@@ -15,7 +15,8 @@ export async function GET() {
     dbLatencyMs = Date.now() - pingStart;
     dbStatus = 'connected';
   } catch (err: any) {
-    dbStatus = `error: ${err.message}`;
+    console.error('[Health Check] MongoDB connection error:', err?.message || err);
+    dbStatus = 'disconnected';
   }
 
   const cloudinaryConfigured = Boolean(

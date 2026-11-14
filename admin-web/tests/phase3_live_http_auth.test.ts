@@ -148,7 +148,7 @@ async function main() {
     const res = await fetch(`${BASE_URL}/api/auth/otp/send`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
-      body: JSON.stringify({ phone: '+91 99988 77665' }),
+      body: JSON.stringify({ phone: `+91 99${String(uniqueTimestamp).slice(-8)}` }),
     });
     const body = await res.json();
     assert(res.status === 200, `OTP send status was ${res.status}: ${JSON.stringify(body)}`);

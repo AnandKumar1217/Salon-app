@@ -67,8 +67,28 @@ async function main() {
 
   // 3. Next 16 Async Dynamic Route: /api/bookings/[id] PATCH
   await runTest('3. Async Route Handler: PATCH /api/bookings/[id] successfully resolves params Promise', async () => {
-    const fakeBookingId = `bkg_next16_${timestamp}`;
-    const res = await fetch(`${BASE_URL}/api/bookings/${fakeBookingId}`, {
+    // Create a real booking first to verify against MongoDB Atlas
+    const createRes = await fetch(`${BASE_URL}/api/bookings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${adminToken}`,
+      },
+      body: JSON.stringify({
+        salonId: `salon_next16_${timestamp}`,
+        staffId: 'st_next16_1',
+        date: '2026-12-10',
+        startTime: '14:00',
+        customerId: `cust_next16_${timestamp}`,
+        customerName: 'Next 16 Test Customer',
+        paymentMethod: 'PAY_AT_SALON',
+      }),
+    });
+    assert.strictEqual(createRes.status, 200, 'Expected booking creation 200');
+    const createData = await createRes.json();
+    const realBookingId = createData.booking.id;
+
+    const res = await fetch(`${BASE_URL}/api/bookings/${realBookingId}`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -79,7 +99,7 @@ async function main() {
       }),
     });
 
-    // Should successfully execute route logic and return 200 (or handled response)
+    // Should successfully execute route logic and return 200
     assert.strictEqual(res.status, 200, `Expected 200, got ${res.status}`);
     const data = await res.json();
     assert.strictEqual(data.success, true);

@@ -8,17 +8,22 @@ declare global {
 }
 
 const mongoOptions = {
+  maxPoolSize: 10,
+  minPoolSize: 1,
   serverSelectionTimeoutMS: 5000,
   connectTimeoutMS: 5000,
 };
 
+let prodClientPromise: Promise<MongoClient> | null = null;
+
 function createClientPromise(): Promise<MongoClient> {
   const client = new MongoClient(uri, mongoOptions);
   return client.connect().catch((err) => {
-    // Clear global promise on rejection so subsequent calls can retry if IP/network is updated
+    // Clear promises on rejection so subsequent calls can retry if network recovers
     if (typeof global !== 'undefined') {
       global._mongoClientPromise = undefined;
     }
+    prodClientPromise = null;
     throw err;
   });
 }
@@ -30,7 +35,10 @@ export function getClientPromise(): Promise<MongoClient> {
     }
     return global._mongoClientPromise;
   }
-  return createClientPromise();
+  if (!prodClientPromise) {
+    prodClientPromise = createClientPromise();
+  }
+  return prodClientPromise;
 }
 
 /**

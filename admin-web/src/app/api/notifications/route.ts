@@ -6,26 +6,38 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const authHeader = req.headers.get('authorization') || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : '';
+    const cookieToken = req.cookies.get('glamora_admin_token')?.value;
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken;
 
-    let userId = searchParams.get('userId');
-    if (token) {
-      try {
-        const decoded = verifyJwtToken(token);
-        userId = decoded.uid || userId;
-      } catch {
-        // use query param fallback
-      }
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication token is required' }, { status: 401 });
     }
 
-    if (!userId) {
+    let caller: any;
+    try {
+      caller = verifyJwtToken(token);
+    } catch {
+      return NextResponse.json({ error: 'Unauthorized: Invalid or expired token' }, { status: 401 });
+    }
+
+    const callerId = caller.uid || caller.id || '';
+    const isAdmin =
+      caller.adminRole === 'SUPER_ADMIN' ||
+      caller.adminRole === 'OPERATIONS_ADMIN' ||
+      caller.role === 'SUPER_ADMIN' ||
+      (Array.isArray(caller.roles) && (caller.roles.includes('super_admin') || caller.roles.includes('SUPER_ADMIN')));
+
+    const requestedUserId = searchParams.get('userId');
+    const targetUserId = isAdmin && requestedUserId ? requestedUserId : callerId;
+
+    if (!targetUserId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
     }
 
     const db = await getDatabase();
     const notifications = await db
       .collection('notifications')
-      .find({ userId })
+      .find({ userId: targetUserId })
       .sort({ createdAt: -1 })
       .limit(50)
       .toArray();
@@ -54,28 +66,58 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
+    const authHeader = req.headers.get('authorization') || '';
+    const cookieToken = req.cookies.get('glamora_admin_token')?.value;
+    const token = authHeader.startsWith('Bearer ') ? authHeader.substring(7) : cookieToken;
+
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication token is required' }, { status: 401 });
+    }
+
+    let caller: any;
+    try {
+      caller = verifyJwtToken(token);
+    } catch {
+      return NextResponse.json({ error: 'Unauthorized: Invalid or expired token' }, { status: 401 });
+    }
+
+    const callerId = caller.uid || caller.id || '';
+    const isAdmin =
+      caller.adminRole === 'SUPER_ADMIN' ||
+      caller.adminRole === 'OPERATIONS_ADMIN' ||
+      caller.role === 'SUPER_ADMIN' ||
+      (Array.isArray(caller.roles) && (caller.roles.includes('super_admin') || caller.roles.includes('SUPER_ADMIN')));
+
     const body = await req.json().catch(() => ({}));
     const { id, markAll, userId } = body;
 
     const db = await getDatabase();
 
-    if (markAll && userId) {
+    if (markAll) {
+      const targetUserId = isAdmin && userId ? userId : callerId;
       await db.collection('notifications').updateMany(
-        { userId },
+        { userId: targetUserId },
         { $set: { read: true, updatedAt: new Date().toISOString() } }
       );
       return NextResponse.json({ success: true, message: 'All notifications marked as read' });
     }
 
     if (id) {
-      await db.collection('notifications').updateOne(
-        { id },
+      const query: any = { id };
+      if (!isAdmin) {
+        query.userId = callerId;
+      }
+      const result = await db.collection('notifications').updateOne(
+        query,
         { $set: { read: true, updatedAt: new Date().toISOString() } }
       );
+      if (result.matchedCount === 0) {
+        return NextResponse.json({ error: 'Notification not found or access denied' }, { status: 404 });
+      }
       return NextResponse.json({ success: true, message: 'Notification marked as read' });
     }
 
-    return NextResponse.json({ error: 'Notification ID or userId required' }, { status: 400 });
+    return NextResponse.json({ error: 'Notification ID or markAll required' }, { status: 400 });
   } catch (error: any) {
     console.error('API /notifications PATCH error:', error);
     return NextResponse.json(
@@ -84,4 +126,3 @@ export async function PATCH(req: NextRequest) {
     );
   }
 }
-

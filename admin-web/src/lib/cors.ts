@@ -24,6 +24,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   'https://staging.glamora.com',
   'https://staging-admin.glamora.com',
   'https://staging-book.glamora.com',
+  'https://salon-app-n7l2.onrender.com',
 ];
 
 /**

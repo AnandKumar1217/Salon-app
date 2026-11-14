@@ -52,9 +52,10 @@ async function main() {
 
   // 1. Admin Login
   await runTest('Admin Login: Authenticate and obtain JWT token', async () => {
+    const testIp = `198.51.100.${(timestamp % 200) + 1}`;
     const res = await fetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
       body: JSON.stringify({ email: 'admin@glamora.com', password: 'admin123' }),
     });
     const body = await res.json();

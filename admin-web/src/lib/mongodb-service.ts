@@ -230,6 +230,21 @@ export async function getMongoBookings(filters?: { salonId?: string; customerId?
   }
 }
 
+export async function getMongoBookingById(bookingId: string): Promise<Booking | null> {
+  try {
+    const db = await getDatabase();
+    const doc = await db.collection(COLLECTIONS.BOOKINGS).findOne({
+      $or: [{ id: bookingId }, { _id: bookingId as any }],
+    });
+    if (!doc) return null;
+    const { _id, ...rest } = doc;
+    return { id: rest.id || _id.toString(), ...rest } as Booking;
+  } catch (err) {
+    console.error('[MongoDB] getMongoBookingById error:', err);
+    return null;
+  }
+}
+
 export async function insertMongoBooking(booking: Partial<Booking>): Promise<Booking> {
   const db = await getDatabase();
   const randomCode = Math.floor(10000 + Math.random() * 90000);
@@ -276,7 +291,8 @@ export async function insertMongoBooking(booking: Partial<Booking>): Promise<Boo
 export async function updateMongoBookingStatus(
   bookingId: string,
   status: Booking['status'],
-  delayMinutes?: number
+  delayMinutes?: number,
+  cancellationReason?: string
 ): Promise<void> {
   const db = await getDatabase();
   const updateData: any = {
@@ -285,6 +301,10 @@ export async function updateMongoBookingStatus(
   };
   if (delayMinutes !== undefined) {
     updateData.delayMinutes = delayMinutes;
+  }
+  if (cancellationReason) {
+    updateData.cancellationReason = cancellationReason;
+    updateData.cancelledAt = new Date().toISOString();
   }
   if (status === 'IN_PROGRESS') {
     updateData.serviceStartedAt = new Date().toISOString();

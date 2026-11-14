@@ -47,9 +47,10 @@ async function main() {
   const bookingDate = '2026-12-01';
 
   // 0. Bootstrap an Admin token
+  const testIp = `198.51.100.${(timestamp % 200) + 1}`;
   const adminRes = await fetch(`${BASE_URL}/api/auth/login`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
     body: JSON.stringify({ email: 'admin@glamora.com', password: 'admin123' }),
   });
   const adminBody = await adminRes.json();
