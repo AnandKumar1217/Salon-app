@@ -21,7 +21,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { DataTable, Column } from '../../components/ui/DataTable';
 import { INITIAL_SALONS, INITIAL_OWNER_APPLICATIONS } from '../../lib/mock-data';
-import { Salon, OwnerApplication, SalonStatus } from '../../lib/types';
+import { Salon, OwnerApplication, SalonStatus, ActivityRequest } from '../../lib/types';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { ApproveSalonModal } from '../../components/modals/ApproveSalonModal';
 import { RejectSalonModal } from '../../components/modals/RejectSalonModal';
@@ -29,9 +29,10 @@ import { SuspendSalonModal } from '../../components/modals/SuspendSalonModal';
 
 export default function SalonsManagementPage() {
   const { canManageSalons } = useAdminAuth();
-  const [activeTab, setActiveTab] = useState<'APPROVED' | 'APPLICATIONS'>('APPROVED');
+  const [activeTab, setActiveTab] = useState<'APPROVED' | 'APPLICATIONS' | 'ACTIVITIES'>('APPROVED');
   const [salons, setSalons] = useState<Salon[]>([]);
   const [applications, setApplications] = useState<OwnerApplication[]>([]);
+  const [activityRequests, setActivityRequests] = useState<ActivityRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -47,9 +48,10 @@ export default function SalonsManagementPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const [salonsRes, appsRes] = await Promise.all([
+      const [salonsRes, appsRes, actRes] = await Promise.all([
         fetch('/api/salons').catch(() => null),
         fetch('/api/owner-applications').catch(() => null),
+        fetch('/api/activity-requests').catch(() => null),
       ]);
 
       if (salonsRes && salonsRes.ok) {
@@ -64,6 +66,11 @@ export default function SalonsManagementPage() {
         setApplications(data.applications || []);
       } else if (isMockMode) {
         setApplications(INITIAL_OWNER_APPLICATIONS);
+      }
+
+      if (actRes && actRes.ok) {
+        const data = await actRes.json();
+        setActivityRequests(data.requests || []);
       }
     } catch {
       if (isMockMode) {
@@ -389,6 +396,123 @@ export default function SalonsManagementPage() {
     },
   ];
 
+  const handleApproveActivity = async (reqItem: ActivityRequest) => {
+    try {
+      await fetch(`/api/activity-requests/${reqItem.id}/approve`, { method: 'POST' });
+      setActivityRequests((prev) =>
+        prev.map((r) => (r.id === reqItem.id ? { ...r, status: 'APPROVED' } : r))
+      );
+    } catch (e) {
+      console.warn('API activity approve error:', e);
+    }
+  };
+
+  const handleRejectActivity = async (reqItem: ActivityRequest) => {
+    const reason = window.prompt('Enter reason for rejecting this activity request:') || '';
+    if (!reason || reason.trim().length < 5) {
+      alert('A reason of at least 5 characters is required to reject.');
+      return;
+    }
+
+    try {
+      await fetch(`/api/activity-requests/${reqItem.id}/reject`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason }),
+      });
+      setActivityRequests((prev) =>
+        prev.map((r) => (r.id === reqItem.id ? { ...r, status: 'REJECTED', rejectionReason: reason } : r))
+      );
+    } catch (e) {
+      console.warn('API activity reject error:', e);
+    }
+  };
+
+  const activityColumns: Column<ActivityRequest>[] = [
+    {
+      header: 'Salon & Request Title',
+      cell: (item) => (
+        <div>
+          <p className="font-semibold text-stone-900">{item.title}</p>
+          <p className="text-xs text-stone-500">{item.salonName}</p>
+          <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.5 rounded font-medium mt-1 inline-block">
+            {item.requestType.replace(/_/g, ' ')}
+          </span>
+        </div>
+      ),
+    },
+    {
+      header: 'Description & Scope',
+      cell: (item) => (
+        <div>
+          <p className="text-xs text-stone-700 max-w-sm line-clamp-2">{item.description}</p>
+          <p className="text-[11px] text-stone-400 mt-1">Submitted by: {item.ownerName} ({item.ownerEmail || 'N/A'})</p>
+        </div>
+      ),
+    },
+    {
+      header: 'Status & Date',
+      cell: (item) => (
+        <div>
+          <span
+            className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${
+              item.status === 'APPROVED'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                : item.status === 'REJECTED'
+                ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                : 'bg-amber-50 text-amber-700 border border-amber-200'
+            }`}
+          >
+            {item.status}
+          </span>
+          <p className="text-[10px] text-stone-400 mt-1">
+            {new Date(item.createdAt).toLocaleDateString()}
+          </p>
+          {item.rejectionReason && (
+            <p className="text-[10px] text-rose-600 mt-0.5 font-medium">
+              Reason: {item.rejectionReason}
+            </p>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'Actions',
+      cell: (item) => (
+        <div className="flex items-center space-x-1.5">
+          {item.status === 'PENDING' && canManageSalons && (
+            <>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                onClick={() => handleRejectActivity(item)}
+              >
+                Reject
+              </Button>
+              <Button
+                size="sm"
+                variant="primary"
+                onClick={() => handleApproveActivity(item)}
+              >
+                Approve
+              </Button>
+            </>
+          )}
+        </div>
+      ),
+    },
+  ];
+
+  const filteredActivities = activityRequests.filter((r) => {
+    const matchesSearch =
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.salonName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.ownerName.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === 'ALL' || r.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -422,6 +546,17 @@ export default function SalonsManagementPage() {
                 {applications.filter((a) => a.status === 'PENDING_APPROVAL').length}
               </span>
             </button>
+            <button
+              onClick={() => setActiveTab('ACTIVITIES')}
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center space-x-1.5 ${
+                activeTab === 'ACTIVITIES' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <span>Activity Requests</span>
+              <span className="w-4 h-4 rounded-full bg-purple-600 text-white text-[10px] flex items-center justify-center font-bold">
+                {activityRequests.filter((r) => r.status === 'PENDING').length}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -448,6 +583,7 @@ export default function SalonsManagementPage() {
               <option value="ALL">All Statuses</option>
               <option value="APPROVED">Approved</option>
               <option value="PENDING_APPROVAL">Pending Review</option>
+              <option value="PENDING">Pending Request</option>
               <option value="SUSPENDED">Suspended</option>
               <option value="REJECTED">Rejected</option>
             </select>
@@ -455,19 +591,28 @@ export default function SalonsManagementPage() {
         </div>
 
         {/* Content Table */}
-        {activeTab === 'APPROVED' ? (
+        {activeTab === 'APPROVED' && (
           <DataTable
             columns={salonColumns}
             data={filteredSalons}
             keyExtractor={(item) => item.id}
             emptyMessage="No approved salons match your search criteria."
           />
-        ) : (
+        )}
+        {activeTab === 'APPLICATIONS' && (
           <DataTable
             columns={appColumns}
             data={filteredApplications}
             keyExtractor={(item) => item.id}
             emptyMessage="No onboarding applications match your filter."
+          />
+        )}
+        {activeTab === 'ACTIVITIES' && (
+          <DataTable
+            columns={activityColumns}
+            data={filteredActivities}
+            keyExtractor={(item) => item.id}
+            emptyMessage="No activity approval requests found."
           />
         )}
       </div>

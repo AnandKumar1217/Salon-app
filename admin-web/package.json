@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -p 3001",
     "lint": "eslint .",
-    "test": "node --experimental-strip-types tests/admin_engine.test.ts && node --experimental-strip-types tests/e2e_salon_lifecycle.test.ts && node --experimental-strip-types tests/phase3_auth_security.test.ts && node --experimental-strip-types tests/push_notifications.test.ts && node --experimental-strip-types tests/phase3_live_http_auth.test.ts && node --experimental-strip-types tests/phase5_live_e2e.test.ts && node --experimental-strip-types tests/phase6_comprehensive_e2e.test.ts && node --experimental-strip-types tests/phase6_booking_stress.test.ts && node --experimental-strip-types tests/phase8_cors_security.test.ts && node --experimental-strip-types tests/phase8_auth_retest.test.ts && node --experimental-strip-types tests/next16_migration_regression.test.ts"
+    "test": "node --experimental-strip-types tests/admin_engine.test.ts && node --experimental-strip-types tests/e2e_salon_lifecycle.test.ts && node --experimental-strip-types tests/phase3_auth_security.test.ts && node --experimental-strip-types tests/push_notifications.test.ts && node --experimental-strip-types tests/phase3_live_http_auth.test.ts && node --experimental-strip-types tests/phase5_live_e2e.test.ts && node --experimental-strip-types tests/phase6_comprehensive_e2e.test.ts && node --experimental-strip-types tests/phase6_booking_stress.test.ts && node --experimental-strip-types tests/phase8_cors_security.test.ts && node --experimental-strip-types tests/phase8_auth_retest.test.ts && node --experimental-strip-types tests/next16_migration_regression.test.ts && node --experimental-strip-types tests/activity_requests.test.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

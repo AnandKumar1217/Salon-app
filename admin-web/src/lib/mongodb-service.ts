@@ -11,6 +11,8 @@ import {
   AdminAuditLog,
   AdminUser,
   SalonStatus,
+  ActivityRequest,
+  ActivityRequestStatus,
 } from './types';
 
 // Collection Names
@@ -24,6 +26,7 @@ export const COLLECTIONS = {
   PAYMENTS: 'payments',
   SUPPORT_TICKETS: 'support_tickets',
   ADMIN_USERS: 'admin_users',
+  ACTIVITY_REQUESTS: 'activity_requests',
 } as const;
 
 let indexesEnsured = false;
@@ -412,4 +415,81 @@ export async function insertMongoAdminUser(admin: AdminUser): Promise<AdminUser>
   const db = await getDatabase();
   await db.collection(COLLECTIONS.ADMIN_USERS).insertOne(admin as any);
   return admin;
+}
+
+// -------------------------------------------------------------
+// Salon Activity Approval Requests
+// -------------------------------------------------------------
+export async function getMongoActivityRequests(filters?: {
+  salonId?: string;
+  status?: ActivityRequestStatus;
+}): Promise<ActivityRequest[]> {
+  try {
+    const db = await getDatabase();
+    const query: Record<string, any> = {};
+    if (filters?.salonId) query.salonId = filters.salonId;
+    if (filters?.status) query.status = filters.status;
+
+    const docs = await db.collection(COLLECTIONS.ACTIVITY_REQUESTS).find(query).sort({ createdAt: -1 }).toArray();
+    return docs.map((d) => {
+      const { _id, ...rest } = d;
+      return { id: rest.id || _id.toString(), ...rest } as ActivityRequest;
+    });
+  } catch (err) {
+    console.error('[MongoDB] getMongoActivityRequests error:', err);
+    return [];
+  }
+}
+
+export async function insertMongoActivityRequest(
+  req: Partial<ActivityRequest>
+): Promise<ActivityRequest> {
+  const newReq: ActivityRequest = {
+    id: req.id || `act_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+    salonId: req.salonId || '',
+    salonName: req.salonName || '',
+    ownerId: req.ownerId || '',
+    ownerName: req.ownerName || '',
+    ownerEmail: req.ownerEmail || '',
+    requestType: req.requestType || 'BRANCH_EXPANSION',
+    title: req.title || 'Activity Request',
+    description: req.description || '',
+    status: req.status || 'PENDING',
+    documents: req.documents || [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  const db = await getDatabase();
+  await db.collection(COLLECTIONS.ACTIVITY_REQUESTS).insertOne(newReq as any);
+  return newReq;
+}
+
+export async function updateMongoActivityRequestStatus(
+  id: string,
+  status: ActivityRequestStatus,
+  reviewedBy?: string,
+  rejectionReason?: string
+): Promise<ActivityRequest | null> {
+  const db = await getDatabase();
+  const updateData: Record<string, any> = {
+    status,
+    reviewedBy: reviewedBy || 'admin',
+    reviewedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (rejectionReason) {
+    updateData.rejectionReason = rejectionReason;
+  }
+
+  const result = await db.collection(COLLECTIONS.ACTIVITY_REQUESTS).findOneAndUpdate(
+    { $or: [{ id }, { _id: (id as any) }] },
+    { $set: updateData },
+    { returnDocument: 'after' }
+  );
+
+  if (!result) return null;
+  const { _id, ...rest } = result as any;
+  return { id: rest.id || _id.toString(), ...rest } as ActivityRequest;
 }

@@ -18,6 +18,11 @@ import {
   INITIAL_REVENUE_REPORT,
 } from '../constants/mockData';
 import { useAuth } from './AuthContext';
+import {
+  fetchBookingsFromBackend,
+  createBookingInBackend,
+  updateBookingInBackend,
+} from '../api/mongoApi';
 
 const OWNER_SALON_STORAGE_KEY = '@glamora_owner_salon_v1';
 const OWNER_BOOKINGS_STORAGE_KEY = '@glamora_owner_bookings_v1';
@@ -102,6 +107,20 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         setAppointments(JSON.parse(storedBookings));
       } else {
         setAppointments(INITIAL_SALON_BOOKINGS);
+      }
+
+      // Synchronize live bookings from backend API
+      try {
+        const liveBookings = await fetchBookingsFromBackend({ salonId: targetSalonId });
+        if (Array.isArray(liveBookings) && liveBookings.length > 0) {
+          setAppointments(liveBookings);
+          await AsyncStorage.setItem(
+            OWNER_BOOKINGS_STORAGE_KEY + '_' + targetSalonId,
+            JSON.stringify(liveBookings)
+          );
+        }
+      } catch (liveErr) {
+        // use local state
       }
 
       if (storedQueue) {
@@ -340,6 +359,14 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const updated = [newBooking, ...appointments];
     setAppointments(updated);
     await persistState(undefined, updated);
+
+    // Sync booking with live backend
+    try {
+      await createBookingInBackend(newBooking);
+    } catch (e) {
+      console.warn('Backend createOwnerAppointment note:', e);
+    }
+
     return newBooking;
   };
 
@@ -363,6 +390,13 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
     setAppointments(updated);
     await persistState(undefined, updated);
+
+    // Sync status change to backend
+    try {
+      await updateBookingInBackend(bookingId, status, delayMinutes);
+    } catch (e) {
+      console.warn('Backend updateAppointmentStatus note:', e);
+    }
 
     // If marked completed, update daily collection report
     if (status === 'COMPLETED') {

@@ -48,6 +48,9 @@ out/
 */.expo/
 web-build/
 *.tsbuildinfo
+*.apk
+*.aab
+release-builds/
 
 # OS & Logs & Temporary Files
 *.log

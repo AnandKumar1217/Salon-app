@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth-guard';
 import { logAdminAction } from '@/lib/audit-logger';
 import { updateMongoApplicationStatus } from '@/lib/mongodb-service';
+import { notifySalonApplicationDecision } from '@/lib/push-notifications';
 import { INITIAL_OWNER_APPLICATIONS } from '@/lib/mock-data';
 
 export async function POST(
@@ -27,7 +28,12 @@ export async function POST(
 
   // 1. Update in MongoDB
   try {
-    await updateMongoApplicationStatus(id, 'REJECTED', admin.email, reason);
+    const updated = await updateMongoApplicationStatus(id, 'REJECTED', admin.email, reason);
+    if (updated) {
+      notifySalonApplicationDecision(updated.ownerId, updated.salonName, 'REJECTED', reason).catch((e) =>
+        console.warn('Push notify reject error:', e.message)
+      );
+    }
   } catch (dbErr) {
     console.warn('MongoDB reject update note:', dbErr);
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyAdminRequest } from '@/lib/auth-guard';
 import { logAdminAction } from '@/lib/audit-logger';
 import { updateMongoApplicationStatus, upsertMongoSalon } from '@/lib/mongodb-service';
+import { notifySalonApplicationDecision } from '@/lib/push-notifications';
 import { INITIAL_SALONS, INITIAL_OWNER_APPLICATIONS } from '@/lib/mock-data';
 
 export async function POST(
@@ -39,6 +40,11 @@ export async function POST(
         reviewCount: 0,
         bufferMinutes: 10,
       });
+
+      // Dispatch push notification to salon owner
+      notifySalonApplicationDecision(updatedApp.ownerId, updatedApp.salonName, 'APPROVED').catch((e) =>
+        console.warn('Push notify approve error:', e.message)
+      );
     }
   } catch (dbErr) {
     console.warn('MongoDB approve update note:', dbErr);

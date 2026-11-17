@@ -5,7 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Booking, TimeSlot, ServiceItem, Salon, Staff, PaymentMethod, BookingSource } from '../types';
 import { INITIAL_BOOKINGS, SALONS } from '../constants/mockData';
-import { createBookingInBackend, updateBookingInBackend } from './mongoApi';
+import { createBookingInBackend, updateBookingInBackend, fetchBookingsFromBackend } from './mongoApi';
 
 const BOOKINGS_STORAGE_KEY = '@glamora_bookings_v1';
 
@@ -150,16 +150,35 @@ export async function getLiveAvailableSlots(params: GetSlotsParams): Promise<{
 /**
  * Fetch all bookings for the customer
  */
-export async function getAllBookings(): Promise<Booking[]> {
+export async function getAllBookings(customerId?: string): Promise<Booking[]> {
+  const isMockAllowed =
+    process.env.NODE_ENV !== 'production' &&
+    process.env.EXPO_PUBLIC_USE_LOCAL_MOCK_FALLBACK === 'true';
+
+  // 1. Attempt to fetch fresh bookings from live backend
+  try {
+    const liveBookings = await fetchBookingsFromBackend({ customerId });
+    if (Array.isArray(liveBookings) && liveBookings.length > 0) {
+      await AsyncStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(liveBookings));
+      return liveBookings;
+    }
+  } catch (err) {
+    console.warn('Backend fetch bookings notice:', err);
+  }
+
+  // 2. Fall back to local AsyncStorage cache
   try {
     const raw = await AsyncStorage.getItem(BOOKINGS_STORAGE_KEY);
     if (!raw) {
-      await AsyncStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(INITIAL_BOOKINGS));
-      return INITIAL_BOOKINGS;
+      if (isMockAllowed) {
+        await AsyncStorage.setItem(BOOKINGS_STORAGE_KEY, JSON.stringify(INITIAL_BOOKINGS));
+        return INITIAL_BOOKINGS;
+      }
+      return [];
     }
     return JSON.parse(raw);
   } catch (e) {
-    return INITIAL_BOOKINGS;
+    return isMockAllowed ? INITIAL_BOOKINGS : [];
   }
 }
 

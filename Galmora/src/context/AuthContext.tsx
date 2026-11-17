@@ -14,6 +14,7 @@ import {
   migrateLegacyStorageToSecureStore,
 } from '../utils/secureStorage';
 import { registerForPushNotificationsAsync } from '../utils/pushNotifications';
+import { submitApplicationToBackend } from '../api/mongoApi';
 
 const AUTH_USER_KEY = '@glamora_auth_user_v2';
 const ONBOARDING_COMPLETED_KEY = '@glamora_onboarding_completed_v2';
@@ -437,15 +438,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       const ownerUser: UserProfile = {
-        id: data.admin?.id || `usr_own_${Date.now()}`,
-        name: data.admin?.name || email.split('@')[0],
-        email: data.admin?.email || email,
-        phone: '+91 98450 12345',
+        id: data.admin?.id || data.user?.id || `usr_own_${Date.now()}`,
+        name: data.admin?.name || data.user?.name || email.split('@')[0],
+        email: data.admin?.email || data.user?.email || email,
+        phone: data.admin?.phone || data.user?.phone || '+91 98450 12345',
         savedSalonIds: [],
         roles: ['customer', 'salon_owner'],
         activeMode: 'OWNER',
         applicationStatus: 'APPROVED',
-        salonId: 'salon_1',
+        salonId: data.admin?.salonId || data.salon?.id || 'salon_1',
         createdAt: new Date().toISOString(),
       };
 
@@ -499,6 +500,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const existingApps: OwnerApplication[] = existingAppsStr ? JSON.parse(existingAppsStr) : [];
     existingApps.push(newApp);
     await AsyncStorage.setItem(OWNER_APPLICATIONS_KEY, JSON.stringify(existingApps));
+
+    // Submit directly to live backend REST API
+    try {
+      await submitApplicationToBackend(newApp);
+    } catch (e) {
+      console.warn('Backend submitApplication notice:', e);
+    }
 
     // Update user record
     const updatedUser: UserProfile = {

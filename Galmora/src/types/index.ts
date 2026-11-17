@@ -259,3 +259,31 @@ export interface ServiceCategory {
   icon: string;
   image: string;
 }
+
+export type ActivityRequestType =
+  | 'BRANCH_EXPANSION'
+  | 'OWNERSHIP_TRANSFER'
+  | 'DOCUMENT_UPDATE'
+  | 'PROMOTIONAL_REVIEW'
+  | 'SERVICE_MENU_CHANGE';
+
+export type ActivityRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface ActivityRequest {
+  id: string;
+  salonId: string;
+  salonName: string;
+  ownerId: string;
+  ownerName: string;
+  ownerEmail?: string;
+  requestType: ActivityRequestType;
+  title: string;
+  description: string;
+  status: ActivityRequestStatus;
+  documents?: string[];
+  rejectionReason?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}

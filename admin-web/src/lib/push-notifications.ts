@@ -309,3 +309,56 @@ export async function notifyBookingStatusUpdated(
   }
 }
 
+/**
+ * Triggers push notifications on salon onboarding approval/rejection decisions
+ */
+export async function notifySalonApplicationDecision(
+  ownerId: string,
+  salonName: string,
+  status: 'APPROVED' | 'REJECTED',
+  reason?: string
+): Promise<void> {
+  if (status === 'APPROVED') {
+    await notifyUser(ownerId, {
+      title: 'Salon Application Approved! 🎊',
+      body: `Congratulations! Your salon "${salonName}" has been approved and is now live on Glamora.`,
+      type: 'SALON_APPLICATION_APPROVED',
+      data: { salonName, status: 'APPROVED' },
+    });
+  } else {
+    await notifyUser(ownerId, {
+      title: 'Salon Application Update 📋',
+      body: `Your salon application for "${salonName}" was not approved${reason ? `: ${reason}` : '.'}`,
+      type: 'SALON_APPLICATION_REJECTED',
+      data: { salonName, status: 'REJECTED', reason },
+    });
+  }
+}
+
+/**
+ * Triggers push notifications on activity approval request decisions
+ */
+export async function notifyActivityRequestDecision(
+  ownerId: string,
+  salonName: string,
+  requestTitle: string,
+  status: 'APPROVED' | 'REJECTED',
+  reason?: string
+): Promise<void> {
+  if (status === 'APPROVED') {
+    await notifyUser(ownerId, {
+      title: 'Activity Request Approved! ✅',
+      body: `Your request "${requestTitle}" for ${salonName} has been approved.`,
+      type: 'ACTIVITY_REQUEST_APPROVED',
+      data: { salonName, requestTitle, status: 'APPROVED' },
+    });
+  } else {
+    await notifyUser(ownerId, {
+      title: 'Activity Request Declined ❌',
+      body: `Your request "${requestTitle}" for ${salonName} was rejected${reason ? `: ${reason}` : '.'}`,
+      type: 'ACTIVITY_REQUEST_REJECTED',
+      data: { salonName, requestTitle, status: 'REJECTED', reason },
+    });
+  }
+}
+

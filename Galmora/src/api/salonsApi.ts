@@ -17,6 +17,9 @@ export interface SalonFilterOptions {
 
 export async function fetchSalons(filters?: SalonFilterOptions): Promise<Salon[]> {
   let list: Salon[] = [];
+  const isMockAllowed =
+    process.env.NODE_ENV !== 'production' &&
+    process.env.EXPO_PUBLIC_USE_LOCAL_MOCK_FALLBACK === 'true';
 
   try {
     const backendSalons = await fetchSalonsFromBackend({
@@ -25,12 +28,14 @@ export async function fetchSalons(filters?: SalonFilterOptions): Promise<Salon[]
     });
     if (backendSalons && backendSalons.length > 0) {
       list = backendSalons;
-    } else {
+    } else if (isMockAllowed) {
       list = [...SALONS];
+    } else {
+      list = [];
     }
   } catch (e) {
     console.warn('Backend fetchSalons note:', e);
-    list = [...SALONS];
+    list = isMockAllowed ? [...SALONS] : [];
   }
 
   // Apply filters
@@ -84,6 +89,11 @@ export async function fetchSalonById(id: string): Promise<Salon | null> {
     console.warn('Error fetching salon by id:', e);
   }
 
-  const found = SALONS.find((s) => s.id === id);
-  return found || null;
+  const isMockAllowed =
+    process.env.NODE_ENV !== 'production' &&
+    process.env.EXPO_PUBLIC_USE_LOCAL_MOCK_FALLBACK === 'true';
+  if (isMockAllowed) {
+    return SALONS.find((s) => s.id === id) || null;
+  }
+  return null;
 }
