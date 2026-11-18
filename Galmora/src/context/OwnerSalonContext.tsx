@@ -22,7 +22,10 @@ import {
   fetchBookingsFromBackend,
   createBookingInBackend,
   updateBookingInBackend,
+  fetchSalonsFromBackend,
 } from '../api/mongoApi';
+
+const isMockAllowed = process.env.EXPO_PUBLIC_USE_LOCAL_MOCK_FALLBACK === 'true';
 
 const OWNER_SALON_STORAGE_KEY = '@glamora_owner_salon_v1';
 const OWNER_BOOKINGS_STORAGE_KEY = '@glamora_owner_bookings_v1';
@@ -106,18 +109,33 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       if (storedBookings) {
         setAppointments(JSON.parse(storedBookings));
       } else {
-        setAppointments(INITIAL_SALON_BOOKINGS);
+        setAppointments(isMockAllowed ? INITIAL_SALON_BOOKINGS : []);
       }
+
+      // Synchronize live salon profile from backend API
+      try {
+        const liveSalons = await fetchSalonsFromBackend();
+        const found = liveSalons.find((s) => s.id === targetSalonId);
+        if (found) {
+          setSalon(found);
+          await AsyncStorage.setItem(
+            OWNER_SALON_STORAGE_KEY + '_' + targetSalonId,
+            JSON.stringify(found)
+          );
+        }
+      } catch (liveSalErr) {}
 
       // Synchronize live bookings from backend API
       try {
         const liveBookings = await fetchBookingsFromBackend({ salonId: targetSalonId });
-        if (Array.isArray(liveBookings) && liveBookings.length > 0) {
-          setAppointments(liveBookings);
-          await AsyncStorage.setItem(
-            OWNER_BOOKINGS_STORAGE_KEY + '_' + targetSalonId,
-            JSON.stringify(liveBookings)
-          );
+        if (Array.isArray(liveBookings)) {
+          if (liveBookings.length > 0 || !isMockAllowed) {
+            setAppointments(liveBookings);
+            await AsyncStorage.setItem(
+              OWNER_BOOKINGS_STORAGE_KEY + '_' + targetSalonId,
+              JSON.stringify(liveBookings)
+            );
+          }
         }
       } catch (liveErr) {
         // use local state

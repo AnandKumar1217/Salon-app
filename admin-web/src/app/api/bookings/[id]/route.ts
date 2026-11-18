@@ -222,6 +222,7 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       message: `Booking ${bookingId} status updated to ${body.status}`,
+      booking: { id: bookingId, status: body.status },
     });
   } catch (error: any) {
     console.error('API /bookings/[id] PATCH error:', error);

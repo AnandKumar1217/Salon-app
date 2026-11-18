@@ -46,10 +46,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const randomCode = Math.floor(10000 + Math.random() * 90000);
     const newBooking: Booking = {
       ...booking,
       id: booking.id || `bkg_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      bookingCode: booking.bookingCode || `GLM-${randomCode}`,
       status: booking.status || 'CONFIRMED',
+      paymentStatus: booking.paymentStatus || 'PENDING',
+      source: booking.source || 'PUBLIC_WEB',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };

@@ -48,6 +48,8 @@ export async function POST(req: NextRequest) {
         name: user.name,
         phone: user.phone,
         roles: user.roles || ['customer'],
+        salonId: user.salonId,
+        applicationStatus: user.applicationStatus,
       },
     });
   } catch (error: any) {

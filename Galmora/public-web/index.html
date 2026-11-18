@@ -416,7 +416,7 @@
           if (data.salons && data.salons.length > 0) {
             currentSalon = salonIdParam
               ? data.salons.find(s => s.id === salonIdParam) || data.salons[0]
-              : data.salons[0];
+              : (data.salons.find(s => s.id === 'salon_luxe_glow') || data.salons[0]);
           }
         }
       } catch (err) {
@@ -540,13 +540,17 @@
       confirmBtn.disabled = true;
 
       try {
+        const assignedStaff = (currentSalon.staff && currentSalon.staff.length > 0)
+          ? currentSalon.staff[0]
+          : { id: 'st_general_01', name: 'Master Stylist' };
+
         const payload = {
           salonId: currentSalon.id,
           salonName: currentSalon.name,
           salonAddress: currentSalon.address || currentSalon.area || '',
           services: [selectedService],
-          staffId: 'st_unassigned',
-          staffName: 'First Available Specialist',
+          staffId: assignedStaff.id,
+          staffName: assignedStaff.name,
           totalDurationMinutes: selectedService.durationMinutes || selectedService.duration || 45,
           bufferMinutes: 10,
           date: selectedDate,
@@ -556,7 +560,7 @@
           customerPhone: phone,
           paymentMethod: 'PAY_AT_SALON',
           paymentStatus: 'PENDING',
-          source: 'WEB'
+          source: 'PUBLIC_WEB'
         };
 
         const res = await fetch(`${BACKEND_URL}/api/bookings`, {

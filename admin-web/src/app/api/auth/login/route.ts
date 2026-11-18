@@ -29,12 +29,25 @@ export async function POST(req: NextRequest) {
 
       if (!admin) {
         const user = await db.collection(COLLECTIONS.USERS).findOne({ email: cleanEmail });
-        if (user && (user.adminRole || user.roles?.includes('super_admin') || user.roles?.includes('SUPER_ADMIN'))) {
+        if (
+          user &&
+          (user.adminRole ||
+            user.roles?.includes('super_admin') ||
+            user.roles?.includes('SUPER_ADMIN') ||
+            user.roles?.includes('salon_owner') ||
+            user.roles?.includes('SALON_OWNER'))
+        ) {
+          const salon = user.salonId
+            ? await db.collection(COLLECTIONS.SALONS).findOne({ id: user.salonId })
+            : await db.collection(COLLECTIONS.SALONS).findOne({ ownerEmail: cleanEmail });
+
           admin = {
             id: user.id || user._id.toString(),
             email: user.email,
-            name: user.name || 'Admin',
-            role: user.adminRole || 'SUPER_ADMIN',
+            name: user.name || (user.roles?.includes('salon_owner') ? 'Salon Owner' : 'Admin'),
+            role: user.adminRole || (user.roles?.includes('salon_owner') ? 'SALON_OWNER' : 'SUPER_ADMIN'),
+            salonId: salon ? salon.id : user.salonId || 'salon_1',
+            salonName: salon ? salon.name : 'My Salon',
             passwordHash: user.passwordHash,
             isActive: true,
             createdAt: user.createdAt || new Date().toISOString(),
@@ -91,6 +104,8 @@ export async function POST(req: NextRequest) {
         email: admin.email,
         name: admin.name,
         role: admin.role,
+        salonId: admin.salonId,
+        salonName: admin.salonName,
         isActive: true,
       },
     });
