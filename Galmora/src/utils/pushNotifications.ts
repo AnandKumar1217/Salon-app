@@ -155,3 +155,75 @@ export function setupNotificationListeners(
     responseSubscription.remove();
   };
 }
+
+/**
+ * Checks for a cold-start notification response if the app was launched by tapping a notification.
+ */
+export async function checkColdStartNotification(
+  onNotificationTapped: (response: Notifications.NotificationResponse) => void
+): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const lastResponse = await Notifications.getLastNotificationResponseAsync();
+    if (lastResponse) {
+      onNotificationTapped(lastResponse);
+    }
+  } catch (err: any) {
+    console.warn('[Push Notification] Error checking cold start response:', err.message);
+  }
+}
+
+/**
+ * Parses notification response and dispatches navigation to the appropriate screen.
+ * Handles booking confirmations, owner new bookings, status changes, applications, suspensions, and system notices.
+ */
+export function routeNotificationResponse(
+  response: Notifications.NotificationResponse,
+  navigate: (screen: string, params?: any) => void
+): void {
+  const data = (response?.notification?.request?.content?.data || {}) as Record<string, any>;
+  const bookingId = typeof data.bookingId === 'string' ? data.bookingId : undefined;
+  const salonId = typeof data.salonId === 'string' ? data.salonId : undefined;
+  const type = typeof data.type === 'string' ? data.type : undefined;
+  const reason = typeof data.reason === 'string' ? data.reason : undefined;
+  const screen = typeof data.screen === 'string' ? data.screen : undefined;
+
+  // 1. Explicit screen navigation if defined in payload
+  if (screen) {
+    navigate(screen, data.params || {});
+    return;
+  }
+
+  // 2. Booking-related notifications -> Appointment Detail
+  if (bookingId) {
+    navigate('AppointmentDetail', { bookingId });
+    return;
+  }
+
+  // 3. Salon exploration / updates -> Salon Detail
+  if (salonId) {
+    navigate('SalonDetail', { salonId });
+    return;
+  }
+
+  // 4. Owner Application approved -> Unlock & navigate to Owner Dashboard
+  if (type === 'OWNER_APPLICATION_APPROVED') {
+    navigate('OwnerTabs');
+    return;
+  }
+
+  // 5. Owner Application rejected -> Rejection notice with reason
+  if (type === 'OWNER_APPLICATION_REJECTED') {
+    navigate('RejectedApplication', { reason: reason || 'Application requires review.' });
+    return;
+  }
+
+  // 6. Salon or Account Suspended
+  if (type === 'ACCOUNT_SUSPENDED' || type === 'SALON_SUSPENDED') {
+    navigate('SuspendedAccount', { reason: reason || 'Account has been temporarily suspended.' });
+    return;
+  }
+
+  // 7. General fallback -> In-app Notifications center
+  navigate('Notifications');
+}

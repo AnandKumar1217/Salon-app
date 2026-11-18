@@ -1,19 +1,32 @@
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://tammisettyanandkumar1_db_user:gJdkTgCS7NmZmnE2@cluster0.lvrwitr.mongodb.net';
-const DB_NAME = 'Glamora';
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+  console.error('Error: MONGODB_URI environment variable is required.');
+  process.exit(1);
+}
+const DB_NAME = process.env.MONGODB_DB_NAME || 'Glamora';
 
 async function seedDemo() {
+  const adminPass = process.env.DEMO_ADMIN_PASSWORD;
+  const ownerPass = process.env.DEMO_OWNER_PASSWORD;
+  const customerPass = process.env.DEMO_CUSTOMER_PASSWORD;
+
+  if (!adminPass || !ownerPass || !customerPass) {
+    console.error('Error: DEMO_ADMIN_PASSWORD, DEMO_OWNER_PASSWORD, and DEMO_CUSTOMER_PASSWORD must be provided via environment variables.');
+    process.exit(1);
+  }
+
   console.log('Connecting to MongoDB Atlas at', DB_NAME, '...');
   const client = new MongoClient(MONGODB_URI);
   await client.connect();
   const db = client.db(DB_NAME);
 
   const saltRounds = 10;
-  const adminHash = await bcrypt.hash('admin123', saltRounds);
-  const ownerHash = await bcrypt.hash('OwnerPassword123!', saltRounds);
-  const customerHash = await bcrypt.hash('CustomerPassword123!', saltRounds);
+  const adminHash = await bcrypt.hash(adminPass, saltRounds);
+  const ownerHash = await bcrypt.hash(ownerPass, saltRounds);
+  const customerHash = await bcrypt.hash(customerPass, saltRounds);
 
   // 1. Ensure Super Admin in admin_users
   await db.collection('admin_users').updateOne(
@@ -34,7 +47,7 @@ async function seedDemo() {
     },
     { upsert: true }
   );
-  console.log('✓ Super Admin ensured: admin@glamora.com (pass: admin123)');
+  console.log('✓ Super Admin ensured: admin@glamora.com (credential hashed and active)');
 
   // 2. Ensure Demo Salon in salons collection
   const fullWorkingHours = {
@@ -176,7 +189,7 @@ async function seedDemo() {
     },
     { upsert: true }
   );
-  console.log('✓ Demo Salon Owner ensured: owner@glamora.com (pass: OwnerPassword123!)');
+  console.log('✓ Demo Salon Owner ensured: owner@glamora.com (credential hashed and active)');
 
   // 4. Ensure Demo Customer in users
   await db.collection('users').updateOne(
@@ -197,7 +210,7 @@ async function seedDemo() {
     },
     { upsert: true }
   );
-  console.log('✓ Demo Customer ensured: customer@glamora.com (pass: CustomerPassword123!)');
+  console.log('✓ Demo Customer ensured: customer@glamora.com (credential hashed and active)');
 
   // 5. Seed a sample booking so that owner and admin immediately see live activity
   const sampleBooking = {

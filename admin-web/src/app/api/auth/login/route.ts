@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
       console.warn('MongoDB connect check in login:', dbErr);
     }
 
-    // Default bootstrap admin fallback for initial setup (only in non-production when database is empty)
-    if (!admin && process.env.NODE_ENV !== 'production' && cleanEmail === 'admin@glamora.com' && password === 'admin123') {
+    // Default bootstrap admin fallback for initial setup (only in non-production when database is empty and explicit env var is set)
+    if (!admin && process.env.NODE_ENV !== 'production' && process.env.BOOTSTRAP_ADMIN_PASSWORD && cleanEmail === 'admin@glamora.com' && password === process.env.BOOTSTRAP_ADMIN_PASSWORD) {
       admin = {
         id: 'adm_super_001',
         email: 'admin@glamora.com',

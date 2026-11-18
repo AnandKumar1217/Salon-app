@@ -14,6 +14,7 @@ export {};
  */
 
 const BASE_URL = 'http://localhost:3001';
+import { TEST_ADMIN_PASSWORD } from './test_env.ts';
 
 console.log('\n================================================================');
 console.log('   GLAMORA PHASE 6: BOOKING ENGINE STRESS & EDGE CASE SUITE');
@@ -51,7 +52,7 @@ async function main() {
   const adminRes = await fetch(`${BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
-    body: JSON.stringify({ email: 'admin@glamora.com', password: 'admin123' }),
+    body: JSON.stringify({ email: 'admin@glamora.com', password: TEST_ADMIN_PASSWORD }),
   });
   const adminBody = await adminRes.json();
   const token = adminBody.token;

@@ -6,38 +6,29 @@ import jwt from 'jsonwebtoken';
 import fs from 'fs';
 import path from 'path';
 
-let envSecret = process.env.JWT_SECRET;
-if (!envSecret) {
-  try {
-    const envFile = fs.readFileSync(path.resolve('.env.local'), 'utf-8');
-    const match = envFile.match(/JWT_SECRET=([^\r\n]+)/);
-    if (match) envSecret = match[1].trim();
-  } catch {}
-}
+import { TEST_ADMIN_PASSWORD, TEST_OWNER_PASSWORD } from './test_env.ts';
 
 const BASE_URL = process.env.TEST_SERVER_URL || 'http://localhost:3001';
-const JWT_SECRET = envSecret || 'glamora_dev_jwt_secret_must_not_be_used_in_prod_32chars';
-
-function makeAdminToken() {
-  return jwt.sign(
-    { uid: 'admin_test', email: 'admin@glamora.com', role: 'SUPER_ADMIN' },
-    JWT_SECRET,
-    { algorithm: 'HS256', expiresIn: '1h', issuer: 'glamora-platform', audience: 'glamora-clients' }
-  );
-}
-
-function makeOwnerToken(salonId: string) {
-  return jwt.sign(
-    { uid: 'owner_test_1', email: 'owner@test.com', role: 'salon_owner', salonId },
-    JWT_SECRET,
-    { algorithm: 'HS256', expiresIn: '1h', issuer: 'glamora-platform', audience: 'glamora-clients' }
-  );
-}
 
 async function run() {
   console.log('Testing Activity Requests API...');
-  const adminToken = makeAdminToken();
-  const ownerToken = makeOwnerToken('salon_test_1');
+  const timestamp = Date.now();
+
+  const adminLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': `198.51.100.${(timestamp % 200) + 1}` },
+    body: JSON.stringify({ email: 'admin@glamora.com', password: TEST_ADMIN_PASSWORD }),
+  });
+  const adminData = await adminLoginRes.json();
+  const adminToken = adminData.token;
+
+  const ownerLoginRes = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-forwarded-for': `198.51.100.${(timestamp % 200) + 2}` },
+    body: JSON.stringify({ email: 'owner@glamora.com', password: TEST_OWNER_PASSWORD }),
+  });
+  const ownerData = await ownerLoginRes.json();
+  const ownerToken = ownerData.token;
 
   // 1. Submit Activity Request
   const postRes = await fetch(`${BASE_URL}/api/activity-requests`, {

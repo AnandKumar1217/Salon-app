@@ -15,10 +15,29 @@
  */
 
 import { MongoClient } from 'mongodb';
+import fs from 'fs';
+import path from 'path';
 
-const BASE_URL = 'http://localhost:3001';
-const MONGODB_URI = 'mongodb+srv://tammisettyanandkumar1_db_user:gJdkTgCS7NmZmnE2@cluster0.lvrwitr.mongodb.net';
-const DB_NAME = 'Glamora';
+// Load local environment overrides if available (git-ignored)
+const envLocalPath = path.resolve(process.cwd(), '.env.local');
+if (fs.existsSync(envLocalPath)) {
+  const content = fs.readFileSync(envLocalPath, 'utf8');
+  content.split('\n').forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith('#')) {
+      const idx = trimmed.indexOf('=');
+      if (idx > 0) {
+        const k = trimmed.substring(0, idx).trim();
+        const v = trimmed.substring(idx + 1).trim();
+        if (!process.env[k]) process.env[k] = v;
+      }
+    }
+  });
+}
+
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3001';
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://tammisettyanandkumar1_db_user:gJdkTgCS7NmZmnE2@cluster0.lvrwitr.mongodb.net';
+const DB_NAME = process.env.MONGODB_DB_NAME || 'Glamora';
 
 let totalTests = 0;
 let passedTests = 0;
@@ -47,12 +66,15 @@ async function main() {
   console.log('================================================================\n');
 
   const timestamp = Date.now();
-  const testDate = `2026-11-${String(20 + (Math.floor(Math.random() * 8))).padStart(2, '0')}`;
-  const testTime = `${String(9 + Math.floor(Math.random() * 8)).padStart(2, '0')}:00`;
+  const testDate = `2026-12-${String(10 + (Math.floor(Math.random() * 15))).padStart(2, '0')}`;
+  const testTime = `${String(9 + (timestamp % 9)).padStart(2, '0')}:${String((timestamp % 5) * 10).padStart(2, '0')}`;
   let createdBookingId = '';
   let bookingCode = '';
   let adminToken = '';
   let ownerToken = '';
+
+  const adminPassword = process.env.DEMO_ADMIN_PASSWORD || 'admin123';
+  const ownerPassword = process.env.DEMO_OWNER_PASSWORD || 'OwnerPassword123!';
 
   // 1. Verify Super Admin Authentication
   await runStep('Super Admin Login & Token Verification (admin@glamora.com)', async () => {
@@ -62,7 +84,7 @@ async function main() {
         'Content-Type': 'application/json',
         'x-forwarded-for': `198.51.100.${(timestamp % 200) + 1}`,
       },
-      body: JSON.stringify({ email: 'admin@glamora.com', password: 'admin123' }),
+      body: JSON.stringify({ email: 'admin@glamora.com', password: adminPassword }),
     });
     const data = await res.json();
     assert(res.status === 200, `Admin login status was ${res.status}`);
@@ -79,7 +101,7 @@ async function main() {
         'Content-Type': 'application/json',
         'x-forwarded-for': `198.51.100.${(timestamp % 200) + 2}`,
       },
-      body: JSON.stringify({ email: 'owner@glamora.com', password: 'OwnerPassword123!' }),
+      body: JSON.stringify({ email: 'owner@glamora.com', password: ownerPassword }),
     });
     const data = await res.json();
     assert(res.status === 200, `Owner login status was ${res.status}`);
@@ -246,10 +268,12 @@ async function main() {
       `Simultaneous booking must be blocked with HTTP 409 Conflict, got ${res2.status}`
     );
 
-    // Clean up temporary slot test
+    // Clean up temporary slot test and step 3 booking
     const client = new MongoClient(MONGODB_URI);
     await client.connect();
-    await client.db(DB_NAME).collection('bookings').deleteOne({ id: bkg1.booking.id });
+    await client.db(DB_NAME).collection('bookings').deleteMany({
+      id: { $in: [bkg1.booking.id, createdBookingId].filter(Boolean) }
+    });
     await client.close();
   });
 

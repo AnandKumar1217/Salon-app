@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Glamora Platform Launchpad & Expo QR Code</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #FAF9F6;
+      color: #1C1917;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .header {
+      text-align: center;
+      max-width: 650px;
+      margin-bottom: 36px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: #4A154B;
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: #1C1917;
+      letter-spacing: -0.5px;
+      margin-bottom: 8px;
+    }
+    p.subtitle {
+      font-size: 14px;
+      color: #78716C;
+      line-height: 1.5;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 1100px;
+    }
+    .card {
+      background: #FFFFFF;
+      border: 1px solid #E7E5E4;
+      border-radius: 20px;
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.08);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .icon-box {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #1C1917;
+    }
+    .card-tag {
+      font-size: 11px;
+      color: #78716C;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: #57534E;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .btn-plum {
+      background: #4A154B;
+      color: #FFFFFF;
+    }
+    .btn-plum:hover {
+      background: #320B33;
+    }
+    .btn-gold {
+      background: #C59A3F;
+      color: #FFFFFF;
+    }
+    .btn-gold:hover {
+      background: #A97F29;
+    }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid #D6D3D1;
+      color: #44403C;
+    }
+    .btn-outline:hover {
+      background: #F5F5F4;
+    }
+    .qr-container {
+      background: #FAFAF9;
+      border: 2px dashed #E7E5E4;
+      border-radius: 16px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .qr-image {
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 12px auto;
+      display: block;
+      background: #FFFFFF;
+      padding: 10px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .code-box {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      background: #E7E5E4;
+      padding: 8px 12px;
+      border-radius: 8px;
+      color: #292524;
+      word-break: break-all;
+      user-select: all;
+    }
+    .meta-list {
+      list-style: none;
+      font-size: 12px;
+      color: #57534E;
+      margin-bottom: 20px;
+      space-y: 6px;
+    }
+    .meta-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span class="badge">Live Local Servers</span>
+    <h1>Glamora Platform Launchpad</h1>
+    <p class="subtitle">All three local services are active. Click below to open web panels directly or scan the QR code to open the Android application in Expo Go.</p>
+  </div>
+
+  <div class="grid">
+    <!-- Super Admin Panel -->
+    <div class="card">
+      <div>
+        <div class="card-header">
+          <div class="icon-box" style="background: #F3E8FF; color: #4A154B;">👑</div>
+          <div>
+            <h2 class="card-title">Super Admin Panel</h2>
+            <p class="card-tag">Live on Render &bull; Next.js 16 LTS</p>
+          </div>
+        </div>
+        <p class="card-desc">
+          Centralized administration with role-based access control, salon verification/approval, unified cross-channel booking monitor, financial separation, and immutable audit logs.
+        </p>
+        <ul class="meta-list">
+          <li><span class="status-dot"></span> Live at https://salon-app-n7l2.onrender.com</li>
+          <li>⚡ 1-Click login presets for all 4 admin roles</li>
+          <li>🛡️ Server-authoritative custom claims verification & MongoDB Atlas</li>
+        </ul>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <a href="https://salon-app-n7l2.onrender.com/login" target="_blank" class="btn btn-plum">Open Live Render Super Admin &rarr;</a>
+        <a href="http://localhost:3001/login" target="_blank" class="btn btn-outline" style="font-size: 12px; padding: 8px 12px;">Local Admin (Port 3001)</a>
+      </div>
+    </div>
+
+    <!-- Public Customer Web Booking -->
+    <div class="card">
+      <div>
+        <div class="card-header">
+          <div class="icon-box" style="background: #FEF3C7; color: #C59A3F;">✂️</div>
+          <div>
+            <h2 class="card-title">Public Customer Web</h2>
+            <p class="card-tag">Port 3002 &bull; Connected to Render Backend</p>
+          </div>
+        </div>
+        <p class="card-desc">
+          Customer web booking portal accessible via QR codes or direct salon slug links. Allows booking treatments without forcing native app download.
+        </p>
+        <ul class="meta-list">
+          <li><span class="status-dot"></span> Server active at http://localhost:3002</li>
+          <li>✨ Connected to Live Render Backend & MongoDB Atlas</li>
+          <li>📅 Real-time slot and stylist availability</li>
+        </ul>
+      </div>
+      <div>
+        <a href="http://localhost:3002" target="_blank" class="btn btn-gold">Open Customer Web Booking &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Expo Mobile App with QR Code -->
+    <div class="card" style="grid-column: span 1 / -1; max-width: 100%;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; align-items: center;">
+        <div class="qr-container" style="margin-bottom: 0;">
+          <img
+            class="qr-image"
+            src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=exp%3A%2F%2F10.142.53.27%3A8081"
+            alt="Scan QR code with Expo Go"
+          />
+          <p style="font-size: 11px; font-weight: 700; color: #78716C; margin-bottom: 6px;">SCAN WITH EXPO GO (ANDROID)</p>
+          <div class="code-box">exp://10.142.53.27:8081</div>
+        </div>
+
+        <div>
+          <div class="card-header">
+            <div class="icon-box" style="background: #E0E7FF; color: #4338CA;">📱</div>
+            <div>
+              <h2 class="card-title">Glamora Android Mobile App</h2>
+              <p class="card-tag">Metro Bundler &bull; Port 8081</p>
+            </div>
+          </div>
+          <p class="card-desc">
+            Single native app bundle containing both <strong>Customer Mode</strong> and <strong>Salon Owner Mode</strong> with dynamic role-based navigation.
+          </p>
+          <div style="background: #F5F5F4; border-radius: 12px; padding: 14px; margin-bottom: 16px; font-size: 12px; color: #44403C; line-height: 1.6;">
+            <strong>How to open on your phone or emulator:</strong><br>
+            1. Open the <strong>Expo Go</strong> app on your Android phone (connected to same Wi-Fi).<br>
+            2. Scan the QR code on the left, or tap "Enter URL manually" and paste: <code style="font-weight: bold; color: #4A154B;">exp://10.142.53.27:8081</code><br>
+            3. Alternatively, to run on Android Emulator on this PC, run: <code style="font-weight: bold;">npx expo run:android</code>
+          </div>
+          <div style="display: flex; gap: 12px;">
+            <a href="http://localhost:8081" target="_blank" class="btn btn-outline" style="flex: 1;">Inspect Metro Bundler</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
+

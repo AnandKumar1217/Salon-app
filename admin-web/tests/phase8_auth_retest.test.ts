@@ -18,6 +18,7 @@ export {};
  */
 
 const BASE_URL = 'http://localhost:3001';
+import { TEST_ADMIN_PASSWORD } from './test_env.ts';
 
 console.log('\n================================================================');
 console.log('   GLAMORA PHASE 8: AUTHENTICATION & AUTHORIZATION RETEST SUITE');
@@ -110,7 +111,7 @@ async function main() {
       },
       body: JSON.stringify({
         email: 'admin@glamora.com',
-        password: 'admin123',
+        password: TEST_ADMIN_PASSWORD,
       }),
     });
 

@@ -14,6 +14,7 @@
  */
 
 import jwt from 'jsonwebtoken';
+import { TEST_ADMIN_PASSWORD } from './test_env.ts';
 
 const BASE_URL = 'http://localhost:3001';
 
@@ -56,7 +57,7 @@ async function main() {
     const res = await fetch(`${BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
-      body: JSON.stringify({ email: 'admin@glamora.com', password: 'admin123' }),
+      body: JSON.stringify({ email: 'admin@glamora.com', password: TEST_ADMIN_PASSWORD }),
     });
     const body = await res.json();
     assert(res.status === 200, `Admin login status was ${res.status}: ${JSON.stringify(body)}`);

@@ -4,6 +4,7 @@
  */
 
 import jwt from 'jsonwebtoken';
+import { TEST_ADMIN_PASSWORD } from './test_env.ts';
 
 const BASE_URL = 'http://localhost:3001';
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_at_least_32_characters_long';
@@ -165,7 +166,7 @@ async function main() {
       headers: { 'Content-Type': 'application/json', 'x-forwarded-for': testIp },
       body: JSON.stringify({
         email: 'admin@glamora.com',
-        password: 'admin123',
+        password: TEST_ADMIN_PASSWORD,
       }),
     });
     const body = await res.json();

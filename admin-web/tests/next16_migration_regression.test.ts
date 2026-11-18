@@ -1,4 +1,5 @@
 import assert from 'node:assert';
+import { TEST_ADMIN_PASSWORD } from './test_env.ts';
 
 const BASE_URL = process.env.TEST_BASE_URL || 'http://localhost:3001';
 
@@ -49,7 +50,7 @@ async function main() {
       },
       body: JSON.stringify({
         email: 'admin@glamora.com',
-        password: 'admin123',
+        password: TEST_ADMIN_PASSWORD,
       }),
     });
 
