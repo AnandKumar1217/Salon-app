@@ -79,7 +79,7 @@ export const OwnerDashboardScreen: React.FC<{ navigation: any }> = ({ navigation
       <View style={styles.topBar}>
         <View style={styles.topLeft}>
           <Text style={styles.salonName} numberOfLines={1}>
-            {salon?.name || 'Maison De Belle'}
+            {salon?.name || 'My Salon'}
           </Text>
           <View style={styles.liveBadgeRow}>
             <View

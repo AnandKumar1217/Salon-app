@@ -90,20 +90,20 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const loadOwnerState = async () => {
     try {
       setIsLoading(true);
-      const targetSalonId = user?.salonId || 'salon_1';
-      const baseSalon = SALONS.find((s) => s.id === targetSalonId) || SALONS[0];
+      const targetSalonId = user?.salonId;
+      const baseSalon = targetSalonId ? (SALONS.find((s) => s.id === targetSalonId) || null) : null;
 
       const [storedSalon, storedBookings, storedQueue, storedBlocked] = await Promise.all([
-        AsyncStorage.getItem(OWNER_SALON_STORAGE_KEY + '_' + targetSalonId),
-        AsyncStorage.getItem(OWNER_BOOKINGS_STORAGE_KEY + '_' + targetSalonId),
-        AsyncStorage.getItem(OWNER_QUEUE_STORAGE_KEY + '_' + targetSalonId),
-        AsyncStorage.getItem(OWNER_BLOCKED_STORAGE_KEY + '_' + targetSalonId),
+        targetSalonId ? AsyncStorage.getItem(OWNER_SALON_STORAGE_KEY + '_' + targetSalonId) : Promise.resolve(null),
+        targetSalonId ? AsyncStorage.getItem(OWNER_BOOKINGS_STORAGE_KEY + '_' + targetSalonId) : Promise.resolve(null),
+        targetSalonId ? AsyncStorage.getItem(OWNER_QUEUE_STORAGE_KEY + '_' + targetSalonId) : Promise.resolve(null),
+        targetSalonId ? AsyncStorage.getItem(OWNER_BLOCKED_STORAGE_KEY + '_' + targetSalonId) : Promise.resolve(null),
       ]);
 
       if (storedSalon) {
         setSalon(JSON.parse(storedSalon));
       } else {
-        setSalon(baseSalon);
+        setSalon(baseSalon || null);
       }
 
       if (storedBookings) {
@@ -113,32 +113,34 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       // Synchronize live salon profile from backend API
-      try {
-        const liveSalons = await fetchSalonsFromBackend();
-        const found = liveSalons.find((s) => s.id === targetSalonId);
-        if (found) {
-          setSalon(found);
-          await AsyncStorage.setItem(
-            OWNER_SALON_STORAGE_KEY + '_' + targetSalonId,
-            JSON.stringify(found)
-          );
-        }
-      } catch (liveSalErr) {}
+      if (targetSalonId) {
+        try {
+          const liveSalons = await fetchSalonsFromBackend();
+          const found = liveSalons.find((s) => s.id === targetSalonId);
+          if (found) {
+            setSalon(found);
+            await AsyncStorage.setItem(
+              OWNER_SALON_STORAGE_KEY + '_' + targetSalonId,
+              JSON.stringify(found)
+            );
+          }
+        } catch (liveSalErr) {}
 
-      // Synchronize live bookings from backend API
-      try {
-        const liveBookings = await fetchBookingsFromBackend({ salonId: targetSalonId });
-        if (Array.isArray(liveBookings)) {
-          if (liveBookings.length > 0 || !isMockAllowed) {
+        // Synchronize live bookings from backend API
+        try {
+          const liveBookings = await fetchBookingsFromBackend({ salonId: targetSalonId });
+          if (Array.isArray(liveBookings)) {
             setAppointments(liveBookings);
             await AsyncStorage.setItem(
               OWNER_BOOKINGS_STORAGE_KEY + '_' + targetSalonId,
               JSON.stringify(liveBookings)
             );
           }
+        } catch (liveErr) {
+          // use local state
         }
-      } catch (liveErr) {
-        // use local state
+      } else {
+        setAppointments([]);
       }
 
       if (storedQueue) {
@@ -154,7 +156,7 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     } catch (e) {
       console.warn('Error loading owner salon state:', e);
-      setSalon(SALONS[0]);
+      setSalon(null);
     } finally {
       setIsLoading(false);
     }
@@ -166,7 +168,8 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     newQueue?: WaitingQueueItem[],
     newBlocked?: BlockedTime[]
   ) => {
-    const sId = salon?.id || user?.salonId || 'salon_1';
+    const sId = salon?.id || user?.salonId;
+    if (!sId) return;
     if (newSalon) {
       await AsyncStorage.setItem(OWNER_SALON_STORAGE_KEY + '_' + sId, JSON.stringify(newSalon));
     }

@@ -203,27 +203,33 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="space-y-3">
-              {INITIAL_BOOKINGS.slice(0, 4).map((bk) => (
-                <div
-                  key={bk.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-stone-100 hover:bg-stone-50/60 transition-colors"
-                >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono text-xs font-bold text-stone-800">{bk.bookingCode}</span>
-                      <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.2 rounded font-semibold uppercase">
-                        {bk.source}
-                      </span>
-                    </div>
-                    <p className="text-xs text-stone-600">{bk.customerName} • {bk.salonName}</p>
-                    <p className="text-[11px] text-stone-400">{bk.startTime} - {bk.endTime} • Stylist: {bk.staffName}</p>
-                  </div>
-                  <div className="text-right space-y-1">
-                    <Badge status={bk.status} />
-                    <p className="text-xs font-semibold text-stone-900">₹{bk.totalAmount}</p>
-                  </div>
+              {INITIAL_BOOKINGS.length === 0 ? (
+                <div className="py-8 text-center text-xs text-stone-400">
+                  No bookings recorded for today.
                 </div>
-              ))}
+              ) : (
+                INITIAL_BOOKINGS.slice(0, 4).map((bk) => (
+                  <div
+                    key={bk.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-stone-100 hover:bg-stone-50/60 transition-colors"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center space-x-2">
+                        <span className="font-mono text-xs font-bold text-stone-800">{bk.bookingCode}</span>
+                        <span className="text-[10px] bg-stone-100 text-stone-600 px-1.5 py-0.2 rounded font-semibold uppercase">
+                          {bk.source}
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-600">{bk.customerName} • {bk.salonName}</p>
+                      <p className="text-[11px] text-stone-400">{bk.startTime} - {bk.endTime} • Stylist: {bk.staffName}</p>
+                    </div>
+                    <div className="text-right space-y-1">
+                      <Badge status={bk.status} />
+                      <p className="text-xs font-semibold text-stone-900">₹{bk.totalAmount}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -240,24 +246,30 @@ export default function AdminDashboardPage() {
             </div>
 
             <div className="space-y-3">
-              {INITIAL_AUDIT_LOGS.slice(0, 4).map((log) => (
-                <div
-                  key={log.id}
-                  className="p-3 rounded-lg border border-stone-100 bg-stone-50/40 text-xs space-y-1"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold text-stone-800">{log.action.replace(/_/g, ' ')}</span>
-                    <span className="text-[10px] text-stone-400 font-mono">
-                      {new Date(log.timestamp).toLocaleDateString()}
-                    </span>
-                  </div>
-                  <p className="text-stone-600 text-[11px]">{log.reason || 'Admin action executed successfully'}</p>
-                  <div className="flex items-center justify-between text-[10px] text-stone-400 pt-1 border-t border-stone-100">
-                    <span>By: {log.adminEmail}</span>
-                    <Badge status={log.adminRole} />
-                  </div>
+              {INITIAL_AUDIT_LOGS.length === 0 ? (
+                <div className="py-8 text-center text-xs text-stone-400">
+                  No audit log entries recorded yet.
                 </div>
-              ))}
+              ) : (
+                INITIAL_AUDIT_LOGS.slice(0, 4).map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3 rounded-lg border border-stone-100 bg-stone-50/40 text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-stone-800">{log.action.replace(/_/g, ' ')}</span>
+                      <span className="text-[10px] text-stone-400 font-mono">
+                        {new Date(log.timestamp).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-stone-600 text-[11px]">{log.reason || 'Admin action executed successfully'}</p>
+                    <div className="flex items-center justify-between text-[10px] text-stone-400 pt-1 border-t border-stone-100">
+                      <span>By: {log.adminEmail}</span>
+                      <Badge status={log.adminRole} />
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
