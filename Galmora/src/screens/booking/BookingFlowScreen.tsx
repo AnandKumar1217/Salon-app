@@ -21,6 +21,7 @@ import { getLiveAvailableSlots } from '../../api/bookingsApi';
 import { useAuth } from '../../context/AuthContext';
 import { useBookings } from '../../context/BookingsContext';
 import { Salon, Staff, TimeSlot, PaymentMethod } from '../../types';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'BookingFlow'>;
 
@@ -164,10 +165,18 @@ export const BookingFlowScreen: React.FC<Props> = ({ route, navigation }) => {
     }
   };
 
+  useHardwareBackHandler(() => {
+    safeGoBack(navigation, 'SalonDetail', { salonId });
+    return true;
+  }, [navigation, salonId]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <Header title="Schedule Appointment" onBack={() => navigation.goBack()} />
+      <Header
+        title="Schedule Appointment"
+        onBack={() => safeGoBack(navigation, 'SalonDetail', { salonId })}
+      />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* Salon & Service Review Box */}

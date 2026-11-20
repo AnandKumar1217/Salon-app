@@ -17,6 +17,7 @@ import { colors, typography, spacing, borderRadius, STATUS_BAR_HEIGHT } from '..
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'OwnerRegistrationWizard'>;
@@ -107,9 +108,18 @@ export const OwnerRegistrationWizard: React.FC<Props> = ({ navigation }) => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     } else {
-      navigation.goBack();
+      safeGoBack(navigation, 'RoleSelection');
     }
   };
+
+  useHardwareBackHandler(() => {
+    if (currentStep > 1) {
+      setCurrentStep((prev) => prev - 1);
+      return true;
+    }
+    safeGoBack(navigation, 'RoleSelection');
+    return true;
+  }, [currentStep, navigation]);
 
   const handleSubmit = async () => {
     if (!validateStep3()) return;

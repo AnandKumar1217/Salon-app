@@ -19,6 +19,7 @@ import { BookingStatusBadge } from '../../components/common/Badge';
 import { CancelBookingModal } from '../../components/modals/CancelBookingModal';
 import { RescheduleModal } from '../../components/modals/RescheduleModal';
 import { useBookings } from '../../context/BookingsContext';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AppointmentDetail'>;
 
@@ -29,12 +30,21 @@ export const AppointmentDetailScreen: React.FC<Props> = ({ route, navigation }) 
   const [cancelModalVisible, setCancelModalVisible] = useState(false);
   const [rescheduleModalVisible, setRescheduleModalVisible] = useState(false);
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'MainTabs', { screen: 'AppointmentsTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   const booking = bookings.find((b) => b.id === bookingId);
 
   if (!booking) {
     return (
       <View style={styles.container}>
-        <Header title="Booking Details" onBack={() => navigation.goBack()} />
+        <Header title="Booking Details" onBack={handleBack} />
         <View style={styles.centerBox}>
           <Text style={styles.notFoundText}>Booking not found.</Text>
         </View>
@@ -83,7 +93,7 @@ export const AppointmentDetailScreen: React.FC<Props> = ({ route, navigation }) 
       <Header
         title={`Booking #${booking.bookingCode}`}
         subtitle={booking.salonName}
-        onBack={() => navigation.goBack()}
+        onBack={handleBack}
       />
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>

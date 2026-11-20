@@ -17,6 +17,7 @@ import { colors, typography, spacing, borderRadius, STATUS_BAR_HEIGHT } from '..
 import { EmptyState } from '../../components/common/EmptyState';
 import { fetchNotifications, markNotificationAsRead, markAllNotificationsAsRead } from '../../api/notificationsApi';
 import { InAppNotification } from '../../types';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Notifications'>;
 
@@ -74,13 +75,22 @@ export const NotificationsScreen: React.FC<Props> = ({ navigation }) => {
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'MainTabs', { screen: 'HomeTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
       <View style={styles.header}>
         <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
           <View>

@@ -14,6 +14,7 @@ import { Header } from '../../components/common/Header';
 import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
@@ -41,7 +42,7 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
         email: email.trim() || undefined,
       });
       Alert.alert('Profile Updated', 'Your profile details have been saved.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        { text: 'OK', onPress: handleBack },
       ]);
     } catch (e: any) {
       setError(e.message || 'Failed to update profile.');
@@ -50,10 +51,19 @@ export const EditProfileScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'MainTabs', { screen: 'ProfileTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <Header title="Edit Profile" onBack={() => navigation.goBack()} />
+      <Header title="Edit Profile" onBack={handleBack} />
 
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Input

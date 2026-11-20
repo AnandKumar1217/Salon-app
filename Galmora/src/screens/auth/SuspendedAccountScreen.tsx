@@ -8,6 +8,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { colors, typography, spacing, borderRadius } from '../../constants/theme';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'SuspendedAccount'>;
@@ -29,6 +30,11 @@ export const SuspendedAccountScreen: React.FC<Props> = ({ navigation, route }) =
     await logout();
     navigation.replace('RoleSelection');
   };
+
+  useHardwareBackHandler(() => {
+    navigation.replace('RoleSelection');
+    return true;
+  }, [navigation]);
 
   return (
     <View style={styles.container}>

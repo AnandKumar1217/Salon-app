@@ -7,6 +7,7 @@ import { RootStackParamList } from '../../navigation/types';
 import { colors, typography, spacing, borderRadius, STATUS_BAR_HEIGHT } from '../../constants/theme';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
+import { useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'PendingApproval'>;
@@ -19,6 +20,11 @@ export const PendingApprovalScreen: React.FC<Props> = ({ navigation }) => {
     await logout();
     navigation.replace('RoleSelection');
   };
+
+  useHardwareBackHandler(() => {
+    navigation.replace('RoleSelection');
+    return true;
+  }, [navigation]);
 
   return (
     <View style={styles.container}>

@@ -5,14 +5,24 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { colors, typography, spacing } from '../../constants/theme';
 import { Header } from '../../components/common/Header';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TermsPrivacy'>;
 
 export const TermsPrivacyScreen: React.FC<Props> = ({ navigation }) => {
+  const handleBack = () => {
+    safeGoBack(navigation, 'MainTabs', { screen: 'ProfileTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <Header title="Terms & Privacy" onBack={() => navigation.goBack()} />
+      <Header title="Terms & Privacy" onBack={handleBack} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.sectionTitle}>1. Glamora Platform Terms</Text>

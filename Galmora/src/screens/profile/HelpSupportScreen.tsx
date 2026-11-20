@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../../navigation/types';
 import { colors, typography, spacing, borderRadius } from '../../constants/theme';
 import { Header } from '../../components/common/Header';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HelpSupport'>;
 
@@ -59,10 +60,19 @@ export const HelpSupportScreen: React.FC<Props> = ({ navigation }) => {
     Linking.openURL('mailto:support@glamora.app?subject=Support%20Request');
   };
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'MainTabs', { screen: 'ProfileTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <Header title="Help & Support" onBack={() => navigation.goBack()} />
+      <Header title="Help & Support" onBack={handleBack} />
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         {/* Support Channels */}

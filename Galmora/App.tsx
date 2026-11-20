@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import { BackHandler } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { NavigationContainer, createNavigationContainerRef } from '@react-navigation/native';
@@ -43,8 +44,20 @@ export default function App() {
       }
     );
 
+    // 2. Safe Android hardware back handler: prevents unhandled GO_BACK errors
+    const onHardwareBack = () => {
+      if (navigationRef.isReady() && navigationRef.canGoBack()) {
+        navigationRef.goBack();
+        return true;
+      }
+      return false; // Allow Android to exit cleanly without unhandled GO_BACK error
+    };
+
+    const backSub = BackHandler.addEventListener('hardwareBackPress', onHardwareBack);
+
     return () => {
       cleanupListeners();
+      backSub.remove();
     };
   }, []);
 
@@ -63,7 +76,16 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer ref={navigationRef} onReady={onNavigationReady}>
+      <NavigationContainer
+        ref={navigationRef}
+        onReady={onNavigationReady}
+        onUnhandledAction={(action) => {
+          // Gracefully suppress unhandled GO_BACK actions across all navigators
+          if (action.type === 'GO_BACK') {
+            return;
+          }
+        }}
+      >
         <AuthProvider>
           <OwnerSalonProvider>
             <LocationProvider>

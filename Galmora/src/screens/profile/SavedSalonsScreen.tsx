@@ -9,6 +9,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import { colors, typography, spacing } from '../../constants/theme';
 import { Header } from '../../components/common/Header';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 import { SalonCard } from '../../components/cards/SalonCard';
 import { EmptyState } from '../../components/common/EmptyState';
 import { fetchSalons } from '../../api/salonsApi';
@@ -40,10 +41,19 @@ export const SavedSalonsScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'MainTabs', { screen: 'HomeTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <Header title="Saved Salons" onBack={() => navigation.goBack()} />
+      <Header title="Saved Salons" onBack={handleBack} />
 
       <FlatList
         data={salons}

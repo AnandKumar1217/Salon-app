@@ -10,6 +10,7 @@ import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows, STATUS_BAR_HEIGHT } from '../../../constants/theme';
 import { useOwnerSalon } from '../../../context/OwnerSalonContext';
+import { safeGoBack, useHardwareBackHandler } from '../../../utils/navigationUtils';
 
 export const OwnerReportsScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { dailyRevenue, appointments } = useOwnerSalon();
@@ -32,13 +33,22 @@ export const OwnerReportsScreen: React.FC<{ navigation: any }> = ({ navigation }
   const onlineDisplay = Math.round(dailyRevenue.onlineRevenue * multiplier);
   const cashDisplay = Math.round(dailyRevenue.cashRevenue * multiplier);
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'OwnerTabs', { screen: 'MoreTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
       {/* Top Header */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Payments & Financial Reports</Text>

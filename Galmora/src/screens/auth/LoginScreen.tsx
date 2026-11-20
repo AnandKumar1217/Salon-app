@@ -19,6 +19,7 @@ import { Input } from '../../components/common/Input';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Login'>;
@@ -131,6 +132,11 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   };
 
+  useHardwareBackHandler(() => {
+    safeGoBack(navigation, 'RoleSelection');
+    return true;
+  }, [navigation]);
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -143,7 +149,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.backBtn}
-            onPress={() => navigation.navigate('RoleSelection')}
+            onPress={() => safeGoBack(navigation, 'RoleSelection')}
             activeOpacity={0.7}
           >
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />

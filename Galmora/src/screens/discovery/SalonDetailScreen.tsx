@@ -23,6 +23,7 @@ import { RatingStars } from '../../components/common/RatingStars';
 import { Badge } from '../../components/common/Badge';
 import { fetchSalonById } from '../../api/salonsApi';
 import { useAuth } from '../../context/AuthContext';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 import { Salon, ServiceItem } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -52,6 +53,11 @@ export const SalonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
       }
     }
   };
+
+  useHardwareBackHandler(() => {
+    safeGoBack(navigation, 'MainTabs', { screen: 'HomeTab' });
+    return true;
+  }, [navigation]);
 
   if (!salon) {
     return (
@@ -142,7 +148,7 @@ export const SalonDetailScreen: React.FC<Props> = ({ route, navigation }) => {
           <View style={styles.floatingNav}>
             <TouchableOpacity
               style={styles.navCircleBtn}
-              onPress={() => navigation.goBack()}
+              onPress={() => safeGoBack(navigation, 'MainTabs', { screen: 'HomeTab' })}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />

@@ -13,6 +13,7 @@ import { colors, typography, spacing, borderRadius, STATUS_BAR_HEIGHT } from '..
 import { useOwnerSalon } from '../../../context/OwnerSalonContext';
 import { Input } from '../../../components/common/Input';
 import { Button } from '../../../components/common/Button';
+import { safeGoBack, useHardwareBackHandler } from '../../../utils/navigationUtils';
 
 export const SalonProfileEditScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { salon, updateSalonProfile } = useOwnerSalon();
@@ -48,7 +49,7 @@ export const SalonProfileEditScreen: React.FC<{ navigation: any }> = ({ navigati
       });
 
       Alert.alert('Settings Saved', 'Your salon profile and booking policies have been updated.', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+        { text: 'OK', onPress: handleBack },
       ]);
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to update salon profile.');
@@ -57,13 +58,22 @@ export const SalonProfileEditScreen: React.FC<{ navigation: any }> = ({ navigati
     }
   };
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'OwnerTabs', { screen: 'MoreTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
       {/* Top Header */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Salon Profile & Policies</Text>

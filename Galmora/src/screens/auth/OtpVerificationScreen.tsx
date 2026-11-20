@@ -16,6 +16,7 @@ import { colors, typography, spacing, borderRadius } from '../../constants/theme
 import { Button } from '../../components/common/Button';
 import { Header } from '../../components/common/Header';
 import { useAuth } from '../../context/AuthContext';
+import { safeGoBack, useHardwareBackHandler } from '../../utils/navigationUtils';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'OtpVerification'>;
 
@@ -128,10 +129,20 @@ export const OtpVerificationScreen: React.FC<Props> = ({ route, navigation }) =>
     }
   };
 
+  useHardwareBackHandler(() => {
+    safeGoBack(navigation, 'Login', { rolePreference: route.params?.rolePreference });
+    return true;
+  }, [navigation, route.params?.rolePreference]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <Header title="Verification" onBack={() => navigation.goBack()} />
+      <Header
+        title="Verification"
+        onBack={() =>
+          safeGoBack(navigation, 'Login', { rolePreference: route.params?.rolePreference })
+        }
+      />
 
       <KeyboardAvoidingView
         style={styles.content}

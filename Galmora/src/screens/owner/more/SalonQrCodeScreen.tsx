@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, spacing, borderRadius, shadows, STATUS_BAR_HEIGHT } from '../../../constants/theme';
 import { useOwnerSalon } from '../../../context/OwnerSalonContext';
 import { Button } from '../../../components/common/Button';
+import { safeGoBack, useHardwareBackHandler } from '../../../utils/navigationUtils';
 
 export const SalonQrCodeScreen: React.FC<{ navigation: any }> = ({ navigation }) => {
   const { salon, updateSalonProfile } = useOwnerSalon();
@@ -54,13 +55,22 @@ export const SalonQrCodeScreen: React.FC<{ navigation: any }> = ({ navigation })
     }
   };
 
+  const handleBack = () => {
+    safeGoBack(navigation, 'OwnerTabs', { screen: 'MoreTab' });
+  };
+
+  useHardwareBackHandler(() => {
+    handleBack();
+    return true;
+  }, [navigation]);
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
 
       {/* Top Header */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.topBarTitle}>Public Booking Link & QR</Text>
