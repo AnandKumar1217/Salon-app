@@ -65,21 +65,91 @@ export async function POST(req: NextRequest) {
     const activeMode = rolePreference === 'salon_owner' ? 'OWNER' : 'CUSTOMER';
 
     if (db) {
-      user = await db.collection(COLLECTIONS.USERS).findOne({ phone: cleanPhone });
+      const phoneDigits = cleanPhone.slice(-10);
+      user = await db.collection(COLLECTIONS.USERS).findOne({
+        $or: [
+          { phone: cleanPhone },
+          { phone: `+91 ${cleanPhone}` },
+          { phone: `+91${cleanPhone}` },
+          { phone: { $regex: phoneDigits } },
+        ],
+      });
+
+      // Check if user has an associated salon or owner application
+      const existingSalon = await db.collection(COLLECTIONS.SALONS).findOne({
+        $or: [
+          { ownerId: user?.id },
+          { ownerPhone: cleanPhone },
+          { contactPhone: cleanPhone },
+          { ownerPhone: { $regex: phoneDigits } },
+          { contactPhone: { $regex: phoneDigits } },
+        ],
+      });
+
+      const existingApp = await db.collection('owner_applications').findOne({
+        $or: [
+          { ownerId: user?.id },
+          { ownerPhone: cleanPhone },
+          { ownerPhone: { $regex: phoneDigits } },
+        ],
+      });
+
+      let applicationStatus = user?.applicationStatus;
+      let salonId = user?.salonId;
+
+      if (existingSalon) {
+        salonId = existingSalon.id;
+        applicationStatus = 'APPROVED';
+      } else if (existingApp) {
+        applicationStatus = existingApp.status || 'PENDING_APPROVAL';
+        if (existingApp.salonId) salonId = existingApp.salonId;
+      }
+
       if (!user) {
-        isNewUser = true;
+        if (existingSalon || existingApp) {
+          isNewUser = false;
+        } else {
+          isNewUser = true;
+        }
+
         const nowIso = new Date().toISOString();
         user = {
-          id: `usr_${Date.now()}`,
-          name: 'Glamora Guest',
+          id: existingSalon?.ownerId || existingApp?.ownerId || `usr_${Date.now()}`,
+          name: existingApp?.ownerName || (rolePreference === 'salon_owner' ? 'Salon Owner' : 'Glamora Guest'),
           phone: cleanPhone,
+          email: existingApp?.ownerEmail || `${cleanPhone}@glamora.phone`,
           roles: assignedRoles,
           activeMode,
-          applicationStatus: rolePreference === 'salon_owner' ? 'UNAPPLIED' : undefined,
+          applicationStatus: applicationStatus || (rolePreference === 'salon_owner' ? 'UNAPPLIED' : undefined),
+          salonId,
           createdAt: nowIso,
           updatedAt: nowIso,
         };
         await db.collection(COLLECTIONS.USERS).insertOne(user);
+      } else {
+        if (rolePreference === 'salon_owner') {
+          const roles = user.roles || ['customer'];
+          if (!roles.includes('salon_owner')) {
+            roles.push('salon_owner');
+          }
+          user.roles = roles;
+          user.activeMode = 'OWNER';
+          user.applicationStatus = applicationStatus || user.applicationStatus || 'UNAPPLIED';
+          if (salonId) user.salonId = salonId;
+
+          await db.collection(COLLECTIONS.USERS).updateOne(
+            { _id: user._id },
+            {
+              $set: {
+                roles,
+                activeMode: 'OWNER',
+                applicationStatus: user.applicationStatus,
+                salonId: user.salonId,
+                updatedAt: new Date().toISOString(),
+              },
+            }
+          );
+        }
       }
     } else {
       user = {
@@ -88,6 +158,7 @@ export async function POST(req: NextRequest) {
         phone: cleanPhone,
         roles: assignedRoles,
         activeMode,
+        applicationStatus: rolePreference === 'salon_owner' ? 'UNAPPLIED' : undefined,
       };
     }
 
@@ -95,9 +166,11 @@ export async function POST(req: NextRequest) {
       uid: user.id || user._id.toString(),
       email: user.email || `${cleanPhone}@glamora.phone`,
       name: user.name || 'Glamora Guest',
-      role: 'customer',
+      role: rolePreference === 'salon_owner' ? 'salon_owner' : 'customer',
       roles: user.roles || ['customer'],
     });
+
+    const appStatus = user.applicationStatus || (rolePreference === 'salon_owner' ? 'UNAPPLIED' : undefined);
 
     return NextResponse.json({
       success: true,
@@ -109,6 +182,9 @@ export async function POST(req: NextRequest) {
         phone: user.phone,
         email: user.email,
         roles: user.roles,
+        activeMode: user.activeMode || activeMode,
+        applicationStatus: appStatus,
+        salonId: user.salonId,
       },
     });
   } catch (error: any) {

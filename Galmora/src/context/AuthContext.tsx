@@ -5,6 +5,7 @@ import {
   UserRole,
   AppMode,
   OwnerApplication,
+  SalonApplicationStatus,
 } from '../types';
 import { INITIAL_USER, DEMO_PRESETS } from '../constants/mockData';
 import {
@@ -50,10 +51,14 @@ interface AuthContextType {
   setPreferredNavigationRole: (role: UserRole) => Promise<void>;
   switchMode: (mode: AppMode) => Promise<{ success: boolean; reason?: string }>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; cooldownSec: number }>;
-  verifyPhoneOtp: (phone: string, code: string, rolePreference?: UserRole) => Promise<{ success: boolean; isNewUser: boolean }>;
+  verifyPhoneOtp: (
+    phone: string,
+    code: string,
+    rolePreference?: UserRole
+  ) => Promise<{ success: boolean; isNewUser: boolean; applicationStatus?: SalonApplicationStatus }>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (name: string, email: string, pass: string) => Promise<void>;
-  ownerLoginWithEmail: (email: string, pass: string) => Promise<void>;
+  ownerLoginWithEmail: (email: string, pass: string) => Promise<{ success: boolean; applicationStatus: SalonApplicationStatus }>;
   submitOwnerApplication: (data: OwnerRegistrationData) => Promise<OwnerApplication>;
   loadPresetUser: (presetKey: keyof typeof DEMO_PRESETS) => Promise<void>;
   updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
@@ -234,7 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     phone: string,
     code: string,
     rolePreference?: UserRole
-  ): Promise<{ success: boolean; isNewUser: boolean }> => {
+  ): Promise<{ success: boolean; isNewUser: boolean; applicationStatus?: SalonApplicationStatus }> => {
     const cleanPhone = phone.replace(/\D/g, '');
 
     try {
@@ -277,6 +282,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const targetMode: AppMode = rolePreference === 'salon_owner' ? 'OWNER' : 'CUSTOMER';
       const initialRoles: UserRole[] = data.user.roles || (rolePreference === 'salon_owner' ? ['customer', 'salon_owner'] : ['customer']);
 
+      const appStatus: SalonApplicationStatus =
+        data.user.applicationStatus || (data.isNewUser ? 'UNAPPLIED' : 'APPROVED');
+
       const verifiedUser: UserProfile = {
         id: data.user.id,
         name: data.user.name || 'Glamora Guest',
@@ -285,7 +293,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         savedSalonIds: [],
         roles: initialRoles,
         activeMode: targetMode,
-        applicationStatus: data.user.applicationStatus || 'UNAPPLIED',
+        applicationStatus: appStatus,
+        salonId: data.user.salonId,
         createdAt: new Date().toISOString(),
       };
 
@@ -294,10 +303,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(verifiedUser));
       registerForPushNotificationsAsync(verifiedUser.id).catch(() => {});
 
-      return { success: true, isNewUser: data.isNewUser || false };
+      return {
+        success: true,
+        isNewUser: data.isNewUser || false,
+        applicationStatus: appStatus,
+      };
     } catch (err: any) {
       if (code === '123456' || (isMockAllowed && code.length === 6 && code !== '000000')) {
         const targetMode: AppMode = rolePreference === 'salon_owner' ? 'OWNER' : 'CUSTOMER';
+        const fallbackStatus: SalonApplicationStatus =
+          rolePreference === 'salon_owner' ? 'APPROVED' : 'UNAPPLIED';
+
         const mockUser: UserProfile = {
           id: `usr_${Date.now()}`,
           name: 'Glamora Guest',
@@ -305,13 +321,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           savedSalonIds: [],
           roles: rolePreference === 'salon_owner' ? ['customer', 'salon_owner'] : ['customer'],
           activeMode: targetMode,
-          applicationStatus: 'UNAPPLIED',
+          applicationStatus: fallbackStatus,
+          salonId: rolePreference === 'salon_owner' ? 'salon_luxe_glow' : undefined,
           createdAt: new Date().toISOString(),
         };
         setUser(mockUser);
         setActiveMode(targetMode);
         await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
-        return { success: true, isNewUser: true };
+        return { success: true, isNewUser: false, applicationStatus: fallbackStatus };
       }
       throw err;
     }
@@ -446,7 +463,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const ownerLoginWithEmail = async (email: string, pass: string) => {
+  const ownerLoginWithEmail = async (
+    email: string,
+    pass: string
+  ): Promise<{ success: boolean; applicationStatus: SalonApplicationStatus }> => {
     if (!email || !email.includes('@')) {
       throw new Error('Please enter a valid salon business email.');
     }
@@ -468,6 +488,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await saveSecureToken(data.token);
       }
 
+      const status: SalonApplicationStatus =
+        data.admin?.applicationStatus || data.user?.applicationStatus || 'APPROVED';
+
       const ownerUser: UserProfile = {
         id: data.admin?.id || data.user?.id || `usr_own_${Date.now()}`,
         name: data.admin?.name || data.user?.name || email.split('@')[0],
@@ -476,30 +499,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         savedSalonIds: [],
         roles: ['customer', 'salon_owner'],
         activeMode: 'OWNER',
-        applicationStatus: 'APPROVED',
-        salonId: data.admin?.salonId || data.salon?.id || 'salon_1',
+        applicationStatus: status,
+        salonId: data.admin?.salonId || data.salon?.id || 'salon_luxe_glow',
         createdAt: new Date().toISOString(),
       };
 
       setUser(ownerUser);
       setActiveMode('OWNER');
       await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(ownerUser));
+      return { success: true, applicationStatus: status };
     } catch (err: any) {
       if (isMockAllowed) {
+        let status: SalonApplicationStatus = 'APPROVED';
         if (email.toLowerCase().includes('pending')) {
+          status = 'PENDING_APPROVAL';
           await loadPresetUser('pendingOwner');
-          return;
-        }
-        if (email.toLowerCase().includes('reject')) {
+        } else if (email.toLowerCase().includes('reject')) {
+          status = 'REJECTED';
           await loadPresetUser('rejectedOwner');
-          return;
-        }
-        if (email.toLowerCase().includes('suspend')) {
+        } else if (email.toLowerCase().includes('suspend')) {
+          status = 'SUSPENDED';
           await loadPresetUser('suspendedOwner');
-          return;
+        } else {
+          await loadPresetUser('approvedOwner');
         }
-        await loadPresetUser('approvedOwner');
-        return;
+        return { success: true, applicationStatus: status };
       }
       throw err;
     }

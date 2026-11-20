@@ -4,7 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { RootStackParamList } from '../../navigation/types';
-import { colors, typography, spacing, borderRadius } from '../../constants/theme';
+import { colors, typography, spacing, borderRadius, STATUS_BAR_HEIGHT } from '../../constants/theme';
 import { Button } from '../../components/common/Button';
 import { useAuth } from '../../context/AuthContext';
 
@@ -13,17 +13,11 @@ type Props = {
 };
 
 export const PendingApprovalScreen: React.FC<Props> = ({ navigation }) => {
-  const { user, ownerApplication, logout, loadPresetUser } = useAuth();
+  const { user, ownerApplication, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
     navigation.replace('RoleSelection');
-  };
-
-  const handleApproveDemo = async () => {
-    // For demo/testing evaluation: immediately switch to approved owner
-    await loadPresetUser('dualRoleApproved');
-    navigation.replace('OwnerTabs', { screen: 'DashboardTab' });
   };
 
   return (
@@ -85,15 +79,6 @@ export const PendingApprovalScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutText}>Log Out of Account</Text>
           </TouchableOpacity>
-
-          {/* Quick Demo Bypass for Evaluator */}
-          <View style={styles.evaluatorBypass}>
-            <Text style={styles.evaluatorLabel}>DEVELOPER / REVIEWER ACTION:</Text>
-            <TouchableOpacity onPress={handleApproveDemo} style={styles.bypassBtn}>
-              <Ionicons name="flash-outline" size={16} color={colors.primary} />
-              <Text style={styles.bypassBtnText}>Simulate Instant Admin Approval</Text>
-            </TouchableOpacity>
-          </View>
         </View>
       </ScrollView>
     </View>
@@ -103,11 +88,11 @@ export const PendingApprovalScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#FAF8F5',
   },
   scrollContent: {
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.huge + 20,
+    paddingTop: STATUS_BAR_HEIGHT + 14,
     paddingBottom: spacing.huge,
     alignItems: 'center',
     maxWidth: 480,
@@ -210,37 +195,6 @@ const styles = StyleSheet.create({
     fontSize: typography.fontSize.sm,
     color: colors.textTertiary,
     fontWeight: '600',
-  },
-  evaluatorBypass: {
-    marginTop: spacing.xl,
-    paddingTop: spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    alignItems: 'center',
-    width: '100%',
-  },
-  evaluatorLabel: {
-    fontSize: typography.fontSize.xs - 1,
-    fontWeight: '700',
-    color: colors.textTertiary,
-    letterSpacing: 1,
-    marginBottom: spacing.xs,
-  },
-  bypassBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surfaceWarm,
-    paddingVertical: spacing.xs + 2,
-    paddingHorizontal: spacing.md,
-    borderRadius: borderRadius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  bypassBtnText: {
-    fontSize: typography.fontSize.xs,
-    fontWeight: '600',
-    color: colors.primary,
-    marginLeft: spacing.xs,
   },
 });
 

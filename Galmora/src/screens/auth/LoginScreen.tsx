@@ -104,8 +104,18 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     setEmailError(null);
     try {
       setLoadingEmail(true);
-      await ownerLoginWithEmail(email, password);
-      navigation.replace('OwnerTabs', { screen: 'DashboardTab' });
+      const res = await ownerLoginWithEmail(email, password);
+      if (res.applicationStatus === 'APPROVED') {
+        navigation.replace('OwnerTabs', { screen: 'DashboardTab' });
+      } else if (res.applicationStatus === 'PENDING_APPROVAL') {
+        navigation.replace('PendingApproval');
+      } else if (res.applicationStatus === 'REJECTED') {
+        navigation.replace('RejectedApplication');
+      } else if (res.applicationStatus === 'SUSPENDED') {
+        navigation.replace('SuspendedAccount');
+      } else {
+        navigation.replace('OwnerRegistrationWizard');
+      }
     } catch (err: any) {
       setEmailError(err.message || 'Owner authentication failed.');
     } finally {

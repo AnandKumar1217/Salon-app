@@ -81,16 +81,27 @@ export const OtpVerificationScreen: React.FC<Props> = ({ route, navigation }) =>
       setError(null);
       const res = await verifyPhoneOtp(phone, fullCode, route.params?.rolePreference);
 
-      if (res.isNewUser) {
-        if (route.params?.rolePreference === 'salon_owner') {
-          navigation.replace('OwnerRegistrationWizard');
+      if (route.params?.rolePreference === 'salon_owner') {
+        const status = res.applicationStatus || 'UNAPPLIED';
+        if (status === 'APPROVED') {
+          navigation.replace('OwnerTabs', { screen: 'DashboardTab' });
+        } else if (status === 'PENDING_APPROVAL') {
+          navigation.replace('PendingApproval');
+        } else if (status === 'REJECTED') {
+          navigation.replace('RejectedApplication');
+        } else if (status === 'SUSPENDED') {
+          navigation.replace('SuspendedAccount');
         } else {
-          navigation.replace('ProfileSetup', { phone });
+          // Phone is not associated with any approved or submitted salon yet
+          navigation.replace('OwnerRegistrationWizard');
         }
-      } else if (route.params?.rolePreference === 'salon_owner') {
-        navigation.replace('OwnerRegistrationWizard');
       } else {
-        navigation.replace('MainTabs', { screen: 'HomeTab' });
+        // Customer flow
+        if (res.isNewUser) {
+          navigation.replace('ProfileSetup', { phone });
+        } else {
+          navigation.replace('MainTabs', { screen: 'HomeTab' });
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Invalid or expired OTP. Please try again.');
