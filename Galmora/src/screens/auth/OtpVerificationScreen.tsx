@@ -79,10 +79,14 @@ export const OtpVerificationScreen: React.FC<Props> = ({ route, navigation }) =>
     try {
       setLoading(true);
       setError(null);
-      const res = await verifyPhoneOtp(phone, fullCode);
+      const res = await verifyPhoneOtp(phone, fullCode, route.params?.rolePreference);
 
       if (res.isNewUser) {
-        navigation.replace('ProfileSetup', { phone });
+        if (route.params?.rolePreference === 'salon_owner') {
+          navigation.replace('OwnerRegistrationWizard');
+        } else {
+          navigation.replace('ProfileSetup', { phone });
+        }
       } else if (route.params?.rolePreference === 'salon_owner') {
         navigation.replace('OwnerRegistrationWizard');
       } else {
@@ -93,6 +97,11 @@ export const OtpVerificationScreen: React.FC<Props> = ({ route, navigation }) =>
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAutoFillDemo = () => {
+    setError(null);
+    setOtp(['1', '2', '3', '4', '5', '6']);
   };
 
   const handleResend = async () => {
@@ -177,11 +186,17 @@ export const OtpVerificationScreen: React.FC<Props> = ({ route, navigation }) =>
           )}
         </View>
 
-        <View style={styles.demoNote}>
-          <Text style={styles.demoNoteText}>
-            💡 For demo testing: Enter <Text style={{ fontWeight: '700' }}>123456</Text>
+        {/* Demo Helper Button */}
+        <TouchableOpacity
+          style={styles.demoPill}
+          onPress={handleAutoFillDemo}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="key-outline" size={16} color={colors.primary} />
+          <Text style={styles.demoPillText}>
+            Demo Code: <Text style={styles.demoCodeBold}>123456</Text> (Tap to auto-fill)
           </Text>
-        </View>
+        </TouchableOpacity>
       </KeyboardAvoidingView>
     </View>
   );
@@ -190,29 +205,29 @@ export const OtpVerificationScreen: React.FC<Props> = ({ route, navigation }) =>
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#FAF8F5',
   },
   content: {
     flex: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xl,
   },
   topSection: {
     alignItems: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: colors.surfaceWarm,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#F8EFF2',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.md,
   },
   title: {
     fontSize: typography.fontSize.xl,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.textPrimary,
     marginBottom: spacing.xs,
   },
@@ -242,15 +257,15 @@ const styles = StyleSheet.create({
   otpRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.xl,
   },
   otpInput: {
     width: 48,
     height: 56,
-    borderRadius: borderRadius.md,
+    borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
+    borderColor: '#E8E0D7',
+    backgroundColor: '#FFFFFF',
     fontSize: 22,
     fontWeight: '700',
     color: colors.textPrimary,
@@ -267,7 +282,7 @@ const styles = StyleSheet.create({
   },
   resendRow: {
     alignItems: 'center',
-    marginBottom: spacing.xxl,
+    marginBottom: spacing.lg,
   },
   cooldownText: {
     fontSize: typography.fontSize.sm,
@@ -283,14 +298,25 @@ const styles = StyleSheet.create({
     color: colors.primary,
     textDecorationLine: 'underline',
   },
-  demoNote: {
-    backgroundColor: colors.surfaceWarm,
-    padding: spacing.md,
-    borderRadius: borderRadius.md,
+  demoPill: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8EFF2',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(74, 30, 54, 0.15)',
+    gap: 8,
   },
-  demoNoteText: {
-    fontSize: typography.fontSize.xs,
-    color: colors.textSecondary,
+  demoPillText: {
+    fontSize: 13,
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  demoCodeBold: {
+    fontWeight: '800',
+    color: colors.primary,
   },
 });

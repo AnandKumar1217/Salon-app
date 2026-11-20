@@ -31,7 +31,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     loginWithEmail,
     registerWithEmail,
     ownerLoginWithEmail,
-    loadPresetUser,
     switchMode,
   } = useAuth();
 
@@ -43,8 +42,8 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
   const [authMethod, setAuthMethod] = useState<'phone' | 'email'>('phone');
   const [isRegister, setIsRegister] = useState(false);
 
-  // Phone states
-  const [phone, setPhone] = useState('9845012345');
+  // Phone state
+  const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
   const [loadingPhone, setLoadingPhone] = useState(false);
 
@@ -63,16 +62,17 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
 
   const handleSendOtp = async () => {
     setPhoneError(null);
-    if (!phone || phone.trim().length < 10) {
+    const clean = phone.replace(/\D/g, '');
+    if (!clean || clean.length < 10) {
       setPhoneError('Please enter a valid 10-digit mobile number.');
       return;
     }
 
     try {
       setLoadingPhone(true);
-      await sendPhoneOtp(phone);
+      await sendPhoneOtp(clean);
       navigation.navigate('OtpVerification', {
-        phone,
+        phone: clean,
         rolePreference: activeRoleTab,
       });
     } catch (err: any) {
@@ -121,27 +121,6 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
     );
   };
 
-  const handleQuickPreset = async (
-    presetKey: 'dualRoleApproved' | 'customerOnly' | 'pendingOwner' | 'rejectedOwner' | 'suspendedOwner'
-  ) => {
-    await loadPresetUser(presetKey);
-    if (presetKey === 'customerOnly') {
-      navigation.replace('MainTabs', { screen: 'HomeTab' });
-    } else if (presetKey === 'dualRoleApproved') {
-      if (activeRoleTab === 'salon_owner') {
-        navigation.replace('OwnerTabs', { screen: 'DashboardTab' });
-      } else {
-        navigation.replace('MainTabs', { screen: 'HomeTab' });
-      }
-    } else if (presetKey === 'pendingOwner') {
-      navigation.replace('PendingApproval');
-    } else if (presetKey === 'rejectedOwner') {
-      navigation.replace('RejectedApplication');
-    } else if (presetKey === 'suspendedOwner') {
-      navigation.replace('SuspendedAccount');
-    }
-  };
-
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -150,7 +129,7 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
       <StatusBar style="dark" />
 
       <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-        {/* Clean Top Navigation Bar */}
+        {/* Top Navigation Bar with Pretty Switch */}
         <View style={styles.topBar}>
           <TouchableOpacity
             style={styles.backBtn}
@@ -160,267 +139,289 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
             <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
 
-          {/* Role Indicator Pill */}
-          <View style={styles.roleTogglePill}>
+          {/* Pretty Segmented Role Switch in Top Right */}
+          <View style={styles.roleSwitchPill}>
             <TouchableOpacity
-              style={[styles.rolePillOption, activeRoleTab === 'customer' && styles.rolePillActive]}
+              style={[
+                styles.roleSwitchOption,
+                activeRoleTab === 'customer' && styles.roleSwitchActive,
+              ]}
               onPress={() => {
                 setActiveRoleTab('customer');
                 setEmailError(null);
                 setPhoneError(null);
               }}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.rolePillText, activeRoleTab === 'customer' && styles.rolePillTextActive]}>
+              <Ionicons
+                name="person-outline"
+                size={13}
+                color={activeRoleTab === 'customer' ? '#FFFFFF' : '#736B66'}
+                style={{ marginRight: 4 }}
+              />
+              <Text
+                style={[
+                  styles.roleSwitchText,
+                  activeRoleTab === 'customer' && styles.roleSwitchTextActive,
+                ]}
+              >
                 Customer
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.rolePillOption, activeRoleTab === 'salon_owner' && styles.rolePillActive]}
+              style={[
+                styles.roleSwitchOption,
+                activeRoleTab === 'salon_owner' && styles.roleSwitchActive,
+              ]}
               onPress={() => {
                 setActiveRoleTab('salon_owner');
                 setEmailError(null);
                 setPhoneError(null);
               }}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <Text style={[styles.rolePillText, activeRoleTab === 'salon_owner' && styles.rolePillTextActive]}>
+              <Ionicons
+                name="storefront-outline"
+                size={13}
+                color={activeRoleTab === 'salon_owner' ? '#FFFFFF' : '#736B66'}
+                style={{ marginRight: 4 }}
+              />
+              <Text
+                style={[
+                  styles.roleSwitchText,
+                  activeRoleTab === 'salon_owner' && styles.roleSwitchTextActive,
+                ]}
+              >
                 Salon Owner
               </Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Title Header */}
+        {/* Clean Header */}
         <View style={styles.header}>
           <Text style={styles.badgeLabel}>
-            {activeRoleTab === 'customer' ? 'CUSTOMER ACCESS' : 'SALON OWNER PORTAL'}
+            {activeRoleTab === 'customer' ? 'CLIENT ACCESS' : 'SALON OWNER PORTAL'}
           </Text>
           <Text style={styles.title}>
             {activeRoleTab === 'customer'
               ? (isRegister && authMethod === 'email' ? 'Create an Account' : 'Welcome to Glamora')
-              : 'Sign in to Salon'}
+              : 'Salon Owner Sign In'}
           </Text>
           <Text style={styles.subtitle}>
             {activeRoleTab === 'customer'
               ? 'Book appointments with guaranteed zero waiting time'
-              : 'Manage your calendar, walk-ins and staff schedules'}
+              : 'Manage appointments, staff schedules, and your salon'}
           </Text>
         </View>
 
-        {/* ----------------- CUSTOMER FLOW ----------------- */}
-        {activeRoleTab === 'customer' && (
-          <View style={styles.formCard}>
-            {/* Method Tabs: Phone vs Email */}
-            <View style={styles.methodTabs}>
-              <TouchableOpacity
-                style={[styles.methodTab, authMethod === 'phone' && styles.methodTabActive]}
-                onPress={() => {
-                  setAuthMethod('phone');
-                  setPhoneError(null);
-                  setEmailError(null);
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name="call-outline"
-                  size={15}
-                  color={authMethod === 'phone' ? colors.primary : colors.textTertiary}
-                />
-                <Text style={[styles.methodTabText, authMethod === 'phone' && styles.methodTabTextActive]}>
-                  Mobile OTP
-                </Text>
-              </TouchableOpacity>
+        {/* ----------------- CLEAN FORM CARD ----------------- */}
+        <View style={styles.formCard}>
+          {/* Method Tabs: Mobile OTP vs Email */}
+          <View style={styles.methodTabs}>
+            <TouchableOpacity
+              style={[styles.methodTab, authMethod === 'phone' && styles.methodTabActive]}
+              onPress={() => {
+                setAuthMethod('phone');
+                setPhoneError(null);
+                setEmailError(null);
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="call-outline"
+                size={15}
+                color={authMethod === 'phone' ? colors.primary : colors.textTertiary}
+              />
+              <Text style={[styles.methodTabText, authMethod === 'phone' && styles.methodTabTextActive]}>
+                Mobile OTP
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[styles.methodTab, authMethod === 'email' && styles.methodTabActive]}
-                onPress={() => {
-                  setAuthMethod('email');
-                  setPhoneError(null);
-                  setEmailError(null);
-                }}
-                activeOpacity={0.8}
-              >
-                <Ionicons
-                  name="mail-outline"
-                  size={15}
-                  color={authMethod === 'email' ? colors.primary : colors.textTertiary}
-                />
-                <Text style={[styles.methodTabText, authMethod === 'email' && styles.methodTabTextActive]}>
-                  Email
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {authMethod === 'phone' ? (
-              <View style={styles.formFields}>
-                <Input
-                  label="Mobile Number"
-                  placeholder="Enter 10-digit mobile number"
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  maxLength={10}
-                  leftIcon="call-outline"
-                  error={phoneError || undefined}
-                  helperText="A 6-digit confirmation code will be sent"
-                />
-
-                <Button
-                  title="Send Verification Code"
-                  onPress={handleSendOtp}
-                  loading={loadingPhone}
-                  size="lg"
-                  style={styles.actionBtn}
-                />
-              </View>
-            ) : (
-              <View style={styles.formFields}>
-                {isRegister && (
-                  <Input
-                    label="Full Name"
-                    placeholder="Enter your full name"
-                    value={fullName}
-                    onChangeText={setFullName}
-                    leftIcon="person-outline"
-                  />
-                )}
-
-                <Input
-                  label="Email Address"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  leftIcon="mail-outline"
-                />
-
-                <Input
-                  label="Password"
-                  placeholder="Enter password"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry
-                  leftIcon="lock-closed-outline"
-                  error={emailError || undefined}
-                />
-
-                {!isRegister && (
-                  <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotRow}>
-                    <Text style={styles.forgotText}>Forgot password?</Text>
-                  </TouchableOpacity>
-                )}
-
-                <Button
-                  title={isRegister ? 'Create Customer Account' : 'Sign In'}
-                  onPress={handleCustomerEmailAuth}
-                  loading={loadingEmail}
-                  size="lg"
-                  style={styles.actionBtn}
-                />
-
-                <TouchableOpacity
-                  onPress={() => setIsRegister(!isRegister)}
-                  style={styles.toggleAuthBtn}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.toggleAuthText}>
-                    {isRegister
-                      ? 'Already have an account? Sign In'
-                      : "Don't have an account? Create one"}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
+            <TouchableOpacity
+              style={[styles.methodTab, authMethod === 'email' && styles.methodTabActive]}
+              onPress={() => {
+                setAuthMethod('email');
+                setPhoneError(null);
+                setEmailError(null);
+              }}
+              activeOpacity={0.8}
+            >
+              <Ionicons
+                name="mail-outline"
+                size={15}
+                color={authMethod === 'email' ? colors.primary : colors.textTertiary}
+              />
+              <Text style={[styles.methodTabText, authMethod === 'email' && styles.methodTabTextActive]}>
+                Email & Password
+              </Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* ----------------- SALON OWNER FLOW ----------------- */}
-        {activeRoleTab === 'salon_owner' && (
-          <View style={styles.formCard}>
+          {/* Flow 1: Mobile OTP (for both Customer and Salon Owner) */}
+          {authMethod === 'phone' ? (
             <View style={styles.formFields}>
               <Input
-                label="Salon Business Email"
-                placeholder="e.g. owner@maisondebelle.com"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                leftIcon="business-outline"
+                label="Mobile Number"
+                placeholder="Enter 10-digit mobile number"
+                value={phone}
+                onChangeText={(text) => {
+                  setPhone(text);
+                  setPhoneError(null);
+                }}
+                keyboardType="phone-pad"
+                maxLength={10}
+                leftIcon="call-outline"
+                error={phoneError || undefined}
               />
 
-              <Input
-                label="Owner Password"
-                placeholder="Enter password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                leftIcon="lock-closed-outline"
-                error={emailError || undefined}
-              />
-
-              <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotRow}>
-                <Text style={styles.forgotText}>Forgot password?</Text>
-              </TouchableOpacity>
+              {/* Pretty Demo OTP Helper Badge */}
+              <View style={styles.demoHelperPill}>
+                <Ionicons name="information-circle-outline" size={15} color="#8A3B52" />
+                <Text style={styles.demoHelperText}>
+                  Demo OTP is <Text style={styles.demoOtpBold}>123456</Text> for instant registration & login
+                </Text>
+              </View>
 
               <Button
-                title="Sign In to Salon Portal"
-                onPress={handleOwnerEmailAuth}
-                loading={loadingEmail}
+                title="Send Verification Code"
+                onPress={handleSendOtp}
+                loading={loadingPhone}
                 size="lg"
-                variant="primary"
                 style={styles.actionBtn}
               />
 
-              <View style={styles.registerDivider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <Button
-                title="Register New Salon"
-                onPress={() => navigation.navigate('OwnerRegistrationWizard')}
-                variant="outline"
-                size="md"
-                leftIcon="add-circle-outline"
-                style={styles.registerBtn}
-              />
+              {activeRoleTab === 'salon_owner' && (
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('OwnerRegistrationWizard')}
+                  style={styles.registerLinkBtn}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.registerLinkText}>
+                    Register a new salon instead ›
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
-          </View>
-        )}
+          ) : (
+            /* Flow 2: Email Auth */
+            <View style={styles.formFields}>
+              {activeRoleTab === 'customer' ? (
+                <>
+                  {isRegister && (
+                    <Input
+                      label="Full Name"
+                      placeholder="Enter your full name"
+                      value={fullName}
+                      onChangeText={setFullName}
+                      leftIcon="person-outline"
+                    />
+                  )}
 
-        {/* Clean, Subtle Demo Helper Bar */}
-        <View style={styles.demoBar}>
-          <Text style={styles.demoBarLabel}>Demo Presets:</Text>
-          <View style={styles.demoPills}>
-            <TouchableOpacity
-              style={styles.demoPill}
-              onPress={() => handleQuickPreset('dualRoleApproved')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.demoPillText}>Owner</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.demoPill}
-              onPress={() => handleQuickPreset('customerOnly')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.demoPillText}>Customer</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.demoPill}
-              onPress={() => handleQuickPreset('pendingOwner')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.demoPillText}>Pending</Text>
-            </TouchableOpacity>
-          </View>
+                  <Input
+                    label="Email Address"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    leftIcon="mail-outline"
+                  />
+
+                  <Input
+                    label="Password"
+                    placeholder="Enter password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    leftIcon="lock-closed-outline"
+                    error={emailError || undefined}
+                  />
+
+                  {!isRegister && (
+                    <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotRow}>
+                      <Text style={styles.forgotText}>Forgot password?</Text>
+                    </TouchableOpacity>
+                  )}
+
+                  <Button
+                    title={isRegister ? 'Create Customer Account' : 'Sign In'}
+                    onPress={handleCustomerEmailAuth}
+                    loading={loadingEmail}
+                    size="lg"
+                    style={styles.actionBtn}
+                  />
+
+                  <TouchableOpacity
+                    onPress={() => setIsRegister(!isRegister)}
+                    style={styles.toggleAuthBtn}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.toggleAuthText}>
+                      {isRegister
+                        ? 'Already have an account? Sign In'
+                        : "Don't have an account? Create one"}
+                    </Text>
+                  </TouchableOpacity>
+                </>
+              ) : (
+                /* Salon Owner Email */
+                <>
+                  <Input
+                    label="Salon Business Email"
+                    placeholder="e.g. owner@salon.com"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    leftIcon="business-outline"
+                  />
+
+                  <Input
+                    label="Owner Password"
+                    placeholder="Enter password"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    leftIcon="lock-closed-outline"
+                    error={emailError || undefined}
+                  />
+
+                  <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotRow}>
+                    <Text style={styles.forgotText}>Forgot password?</Text>
+                  </TouchableOpacity>
+
+                  <Button
+                    title="Sign In to Salon Portal"
+                    onPress={handleOwnerEmailAuth}
+                    loading={loadingEmail}
+                    size="lg"
+                    variant="primary"
+                    style={styles.actionBtn}
+                  />
+
+                  <View style={styles.registerDivider}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>or</Text>
+                    <View style={styles.dividerLine} />
+                  </View>
+
+                  <Button
+                    title="Register New Salon"
+                    onPress={() => navigation.navigate('OwnerRegistrationWizard')}
+                    variant="outline"
+                    size="md"
+                    leftIcon="add-circle-outline"
+                    style={styles.registerBtn}
+                  />
+                </>
+              )}
+            </View>
+          )}
         </View>
 
-        {/* Footer */}
+        {/* Clean Footer */}
         <View style={styles.footer}>
           <TouchableOpacity onPress={() => navigation.navigate('TermsPrivacy')}>
             <Text style={styles.footerText}>Terms of Service • Privacy Policy</Text>
@@ -434,122 +435,138 @@ export const LoginScreen: React.FC<Props> = ({ navigation, route }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: '#FAF8F5',
   },
   scrollContent: {
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: 24,
     paddingTop: STATUS_BAR_HEIGHT + 16,
-    paddingBottom: spacing.xxl,
+    paddingBottom: 36,
   },
   topBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.xl,
+    marginBottom: 24,
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
   },
   backBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.surface,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#EFE9E3',
+    shadowColor: '#4A1E36',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 1,
   },
-  roleTogglePill: {
+  roleSwitchPill: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceWarm,
+    backgroundColor: '#F3EBE6',
     padding: 3,
-    borderRadius: borderRadius.full,
+    borderRadius: 9999,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: '#EBE2DC',
   },
-  rolePillOption: {
-    paddingVertical: 5,
+  roleSwitchOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 6,
     paddingHorizontal: 12,
-    borderRadius: borderRadius.full,
+    borderRadius: 9999,
   },
-  rolePillActive: {
+  roleSwitchActive: {
     backgroundColor: colors.primary,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.16,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  rolePillText: {
-    fontSize: 11,
+  roleSwitchText: {
+    fontSize: 12,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: '#736B66',
   },
-  rolePillTextActive: {
+  roleSwitchTextActive: {
     color: '#FFFFFF',
     fontWeight: '700',
   },
   header: {
-    marginBottom: spacing.xl,
+    marginBottom: 22,
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
   },
   badgeLabel: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 1.2,
+    letterSpacing: 2,
     color: colors.primary,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   title: {
     fontSize: 26,
     fontWeight: '800',
-    color: colors.textPrimary,
-    letterSpacing: -0.3,
+    color: '#1F1E1E',
+    letterSpacing: -0.4,
   },
   subtitle: {
-    fontSize: typography.fontSize.sm,
-    color: colors.textSecondary,
+    fontSize: 14,
+    color: '#736B66',
     marginTop: 4,
     lineHeight: 20,
   },
   formCard: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
-    padding: spacing.xl,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    borderColor: '#EFE9E3',
+    shadowColor: '#4A1E36',
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.04,
-    shadowRadius: 8,
-    marginBottom: spacing.xl,
+    shadowRadius: 10,
+    elevation: 2,
+    marginBottom: 24,
     maxWidth: 440,
     width: '100%',
     alignSelf: 'center',
   },
   methodTabs: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceWarm,
-    borderRadius: borderRadius.md,
-    padding: 3,
-    marginBottom: spacing.lg,
+    backgroundColor: '#FAF5F1',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 18,
   },
   methodTab: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 8,
-    borderRadius: borderRadius.sm,
+    paddingVertical: 9,
+    borderRadius: 10,
     gap: 6,
   },
   methodTabActive: {
-    backgroundColor: colors.surface,
-    elevation: 1,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#4A1E36',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   methodTabText: {
-    fontSize: 12,
+    fontSize: 12.5,
     fontWeight: '600',
-    color: colors.textSecondary,
+    color: '#736B66',
   },
   methodTabTextActive: {
     color: colors.primary,
@@ -558,82 +575,85 @@ const styles = StyleSheet.create({
   formFields: {
     width: '100%',
   },
+  demoHelperPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FBF0F3',
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(138, 59, 82, 0.15)',
+    marginBottom: 16,
+    marginTop: -4,
+    gap: 7,
+  },
+  demoHelperText: {
+    fontSize: 12,
+    color: '#652D4C',
+    flex: 1,
+  },
+  demoOtpBold: {
+    fontWeight: '800',
+    color: '#8A3B52',
+  },
   actionBtn: {
-    marginTop: spacing.sm,
+    marginTop: 4,
   },
   forgotRow: {
     alignSelf: 'flex-end',
-    marginBottom: spacing.md,
-    marginTop: -spacing.xs,
+    marginBottom: 16,
+    marginTop: -4,
   },
   forgotText: {
-    fontSize: typography.fontSize.xs,
+    fontSize: 12.5,
     color: colors.primary,
     fontWeight: '600',
   },
   toggleAuthBtn: {
     alignItems: 'center',
-    paddingVertical: spacing.md,
-    marginTop: spacing.xs,
+    paddingVertical: 14,
+    marginTop: 6,
   },
   toggleAuthText: {
-    fontSize: typography.fontSize.xs + 1,
+    fontSize: 13,
     color: colors.primary,
-    fontWeight: '600',
+    fontWeight: '700',
+  },
+  registerLinkBtn: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingVertical: 8,
+  },
+  registerLinkText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: colors.primary,
   },
   registerDivider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: spacing.md,
+    marginVertical: 16,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: colors.borderLight,
+    backgroundColor: '#EFE9E3',
   },
   dividerText: {
-    paddingHorizontal: spacing.sm,
-    fontSize: 11,
-    color: colors.textTertiary,
+    paddingHorizontal: 12,
+    fontSize: 12,
+    color: '#9E9690',
   },
   registerBtn: {
     width: '100%',
   },
-  demoBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    marginBottom: spacing.lg,
-  },
-  demoBarLabel: {
-    fontSize: 11,
-    color: colors.textTertiary,
-    fontWeight: '600',
-  },
-  demoPills: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  demoPill: {
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-    backgroundColor: colors.surfaceWarm,
-    borderRadius: borderRadius.sm,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  demoPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: colors.textSecondary,
-  },
   footer: {
     alignItems: 'center',
-    paddingVertical: spacing.xs,
+    paddingVertical: 12,
   },
   footerText: {
-    fontSize: 11,
-    color: colors.textTertiary,
+    fontSize: 12,
+    color: '#9E9690',
   },
 });

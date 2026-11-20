@@ -50,7 +50,7 @@ interface AuthContextType {
   setPreferredNavigationRole: (role: UserRole) => Promise<void>;
   switchMode: (mode: AppMode) => Promise<{ success: boolean; reason?: string }>;
   sendPhoneOtp: (phone: string) => Promise<{ success: boolean; cooldownSec: number }>;
-  verifyPhoneOtp: (phone: string, code: string) => Promise<{ success: boolean; isNewUser: boolean }>;
+  verifyPhoneOtp: (phone: string, code: string, rolePreference?: UserRole) => Promise<{ success: boolean; isNewUser: boolean }>;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (name: string, email: string, pass: string) => Promise<void>;
   ownerLoginWithEmail: (email: string, pass: string) => Promise<void>;
@@ -224,7 +224,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const verifyPhoneOtp = async (
     phone: string,
-    code: string
+    code: string,
+    rolePreference?: UserRole
   ): Promise<{ success: boolean; isNewUser: boolean }> => {
     const cleanPhone = phone.replace(/\D/g, '');
 
@@ -232,7 +233,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await fetch(`${BACKEND_API_URL}/api/auth/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanPhone, code }),
+        body: JSON.stringify({ phone: cleanPhone, code, rolePreference }),
       });
 
       if (!res.ok) {
@@ -247,38 +248,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await saveSecureToken(data.token);
       }
 
+      const targetMode: AppMode = rolePreference === 'salon_owner' ? 'OWNER' : 'CUSTOMER';
+      const initialRoles: UserRole[] = data.user.roles || (rolePreference === 'salon_owner' ? ['customer', 'salon_owner'] : ['customer']);
+
       const verifiedUser: UserProfile = {
         id: data.user.id,
         name: data.user.name || 'Glamora Guest',
         phone: data.user.phone || cleanPhone,
         email: data.user.email,
         savedSalonIds: [],
-        roles: data.user.roles || ['customer'],
-        activeMode: 'CUSTOMER',
-        applicationStatus: 'UNAPPLIED',
+        roles: initialRoles,
+        activeMode: targetMode,
+        applicationStatus: data.user.applicationStatus || 'UNAPPLIED',
         createdAt: new Date().toISOString(),
       };
 
       setUser(verifiedUser);
-      setActiveMode('CUSTOMER');
+      setActiveMode(targetMode);
       await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(verifiedUser));
       registerForPushNotificationsAsync(verifiedUser.id).catch(() => {});
 
       return { success: true, isNewUser: data.isNewUser || false };
     } catch (err: any) {
       if (isMockAllowed && code.length === 6 && code !== '000000') {
+        const targetMode: AppMode = rolePreference === 'salon_owner' ? 'OWNER' : 'CUSTOMER';
         const mockUser: UserProfile = {
           id: `usr_${Date.now()}`,
           name: 'Glamora Guest',
           phone: `+91 ${cleanPhone}`,
           savedSalonIds: [],
-          roles: ['customer'],
-          activeMode: 'CUSTOMER',
+          roles: rolePreference === 'salon_owner' ? ['customer', 'salon_owner'] : ['customer'],
+          activeMode: targetMode,
           applicationStatus: 'UNAPPLIED',
           createdAt: new Date().toISOString(),
         };
         setUser(mockUser);
-        setActiveMode('CUSTOMER');
+        setActiveMode(targetMode);
         await AsyncStorage.setItem(AUTH_USER_KEY, JSON.stringify(mockUser));
         return { success: true, isNewUser: true };
       }

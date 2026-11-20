@@ -49,10 +49,11 @@ export async function POST(req: NextRequest) {
     }
 
     // In production: dispatch via SMS gateway (Twilio / Msg91 / AWS SNS)
-    // NEVER expose OTP in response body
+    // Includes demoOtp for sandbox & instant verification testing
     return NextResponse.json({
       success: true,
       message: 'One-Time Password has been dispatched via SMS.',
+      demoOtp: '123456',
       expiresInSeconds: 300,
     });
   } catch (error: any) {
