@@ -66,7 +66,10 @@ export async function POST(req: NextRequest) {
       caller.adminRole === 'SUPER_ADMIN' ||
       caller.adminRole === 'OPERATIONS_ADMIN' ||
       caller.role === 'SUPER_ADMIN';
-    const isOwner = caller.uid && body.ownerId && caller.uid === body.ownerId;
+    const isOwner =
+      (caller.uid && body.ownerId && caller.uid === body.ownerId) ||
+      caller.role === 'salon_owner' ||
+      (Array.isArray(caller.roles) && caller.roles.includes('salon_owner'));
 
     if (!isAdmin && !isOwner) {
       return NextResponse.json(

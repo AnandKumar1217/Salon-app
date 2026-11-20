@@ -55,6 +55,8 @@ export interface Salon {
   bufferMinutes: number;
   cancellationWindowHours: number;
   categories: string[];
+  services?: any[];
+  staff?: any[];
   isOnlineBookingPaused?: boolean;
   createdAt: string;
   updatedAt: string;

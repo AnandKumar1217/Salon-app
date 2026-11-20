@@ -27,6 +27,31 @@ export async function fetchSalonsFromBackend(filters?: {
 }
 
 /**
+ * Persist or update salon profile and listing in MongoDB via backend API
+ */
+export async function saveSalonToBackend(salon: Partial<Salon> & { id: string }): Promise<Salon> {
+  const token = await getSecureToken();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${BACKEND_API_URL}/api/salons`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(salon),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: 'Failed to update salon profile' }));
+    throw new Error(err.error || 'Failed to update salon profile');
+  }
+
+  const data = await res.json();
+  return data.salon;
+}
+
+/**
  * Confirms and stores booking in MongoDB via backend API
  */
 export async function createBookingInBackend(booking: Partial<Booking>): Promise<Booking> {

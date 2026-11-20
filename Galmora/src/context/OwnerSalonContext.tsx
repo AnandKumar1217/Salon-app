@@ -23,6 +23,7 @@ import {
   createBookingInBackend,
   updateBookingInBackend,
   fetchSalonsFromBackend,
+  saveSalonToBackend,
 } from '../api/mongoApi';
 
 const isMockAllowed = process.env.EXPO_PUBLIC_USE_LOCAL_MOCK_FALLBACK === 'true';
@@ -113,35 +114,36 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
 
       // Synchronize live salon profile from backend API
-      if (targetSalonId) {
-        try {
-          const liveSalons = await fetchSalonsFromBackend();
-          const found = liveSalons.find((s) => s.id === targetSalonId);
-          if (found) {
-            setSalon(found);
-            await AsyncStorage.setItem(
-              OWNER_SALON_STORAGE_KEY + '_' + targetSalonId,
-              JSON.stringify(found)
-            );
-          }
-        } catch (liveSalErr) {}
+      try {
+        const liveSalons = await fetchSalonsFromBackend();
+        const found = liveSalons.find(
+          (s) =>
+            (targetSalonId && s.id === targetSalonId) ||
+            (user?.id && s.ownerId === user.id) ||
+            (user?.phone && s.ownerPhone === user.phone)
+        );
+        if (found) {
+          setSalon(found);
+          await AsyncStorage.setItem(
+            OWNER_SALON_STORAGE_KEY + '_' + found.id,
+            JSON.stringify(found)
+          );
 
-        // Synchronize live bookings from backend API
-        try {
-          const liveBookings = await fetchBookingsFromBackend({ salonId: targetSalonId });
-          if (Array.isArray(liveBookings)) {
-            setAppointments(liveBookings);
-            await AsyncStorage.setItem(
-              OWNER_BOOKINGS_STORAGE_KEY + '_' + targetSalonId,
-              JSON.stringify(liveBookings)
-            );
+          // Synchronize live bookings from backend API
+          try {
+            const liveBookings = await fetchBookingsFromBackend({ salonId: found.id });
+            if (Array.isArray(liveBookings)) {
+              setAppointments(liveBookings);
+              await AsyncStorage.setItem(
+                OWNER_BOOKINGS_STORAGE_KEY + '_' + found.id,
+                JSON.stringify(liveBookings)
+              );
+            }
+          } catch (liveErr) {
+            // use local state
           }
-        } catch (liveErr) {
-          // use local state
         }
-      } else {
-        setAppointments([]);
-      }
+      } catch (liveSalErr) {}
 
       if (storedQueue) {
         setWaitingQueue(JSON.parse(storedQueue));
@@ -168,8 +170,14 @@ export const OwnerSalonProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     newQueue?: WaitingQueueItem[],
     newBlocked?: BlockedTime[]
   ) => {
-    const sId = salon?.id || user?.salonId;
+    const sId = salon?.id || user?.salonId || (newSalon && newSalon.id);
     if (!sId) return;
+    if (newSalon) {
+      await AsyncStorage.setItem(OWNER_SALON_STORAGE_KEY + '_' + sId, JSON.stringify(newSalon));
+      saveSalonToBackend(newSalon).catch((err) =>
+        console.warn('Backend saveSalon notice:', err.message)
+      );
+    }
     if (newSalon) {
       await AsyncStorage.setItem(OWNER_SALON_STORAGE_KEY + '_' + sId, JSON.stringify(newSalon));
     }

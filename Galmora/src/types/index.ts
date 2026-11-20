@@ -104,6 +104,9 @@ export interface Salon {
   id: string;
   slug: string; // URL-safe identifier for public booking
   ownerId: string;
+  ownerName?: string;
+  ownerPhone?: string;
+  ownerEmail?: string;
   name: string;
   tagline: string;
   description: string;

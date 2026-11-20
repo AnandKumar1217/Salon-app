@@ -44,6 +44,27 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
     Linking.openURL(calUrl);
   };
 
+  const handleWhatsAppSalon = () => {
+    if (!booking) return;
+    const cleanNumber = (booking.salonWhatsapp || booking.salonPhone || '').replace(/\D/g, '');
+    const msg = encodeURIComponent(
+      `Hello ${booking.salonName}! 👋 I have booked an appointment on Glamora.\n\n*Booking Code:* #${booking.bookingCode}\n*Date & Time:* ${booking.date} at ${booking.startTime}\n*Customer:* ${booking.customerName}\n*Services:* ${booking.services.map((s) => s.name).join(', ')}\n*Amount:* ₹${booking.totalAmount}\n\nLooking forward to my appointment!`
+    );
+    if (cleanNumber) {
+      Linking.openURL(`whatsapp://send?phone=${cleanNumber}&text=${msg}`).catch(() => {
+        Linking.openURL(`https://wa.me/${cleanNumber}?text=${msg}`);
+      });
+    }
+  };
+
+  const handleCallSalon = () => {
+    if (!booking) return;
+    const phone = (booking.salonPhone || booking.salonWhatsapp || '').replace(/\s+/g, '');
+    if (phone) {
+      Linking.openURL(`tel:${phone}`);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -127,7 +148,17 @@ export const BookingConfirmationScreen: React.FC<Props> = ({ route, navigation }
 
             <TouchableOpacity style={styles.ticketActionBtn} onPress={handleCalendar}>
               <Ionicons name="calendar" size={16} color={colors.primary} />
-              <Text style={styles.ticketActionText}>Add to Calendar</Text>
+              <Text style={styles.ticketActionText}>Calendar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={[styles.ticketActionBtn, { backgroundColor: '#E8F5E9' }]} onPress={handleWhatsAppSalon}>
+              <Ionicons name="logo-whatsapp" size={16} color="#2E7D32" />
+              <Text style={[styles.ticketActionText, { color: '#2E7D32' }]}>WhatsApp</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.ticketActionBtn} onPress={handleCallSalon}>
+              <Ionicons name="call-outline" size={16} color={colors.primary} />
+              <Text style={styles.ticketActionText}>Call</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -294,7 +325,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: spacing.sm,
-    gap: 6,
+    paddingHorizontal: 4,
+    borderRadius: borderRadius.md,
+    gap: 4,
   },
   ticketActionText: {
     fontSize: typography.fontSize.xs,
