@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, typography, spacing } from '../../constants/theme';
+import { colors, typography, spacing, STATUS_BAR_HEIGHT } from '../../constants/theme';
 
 interface HeaderProps {
   title: string;
@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onBack, rightAc
             activeOpacity={0.7}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
-            <Ionicons name="arrow-back" size={22} color={colors.textPrimary} />
+            <Ionicons name="arrow-back" size={20} color={colors.textPrimary} />
           </TouchableOpacity>
         )}
         <View style={styles.titleContainer}>
@@ -46,7 +46,7 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onBack, rightAc
           onPress={rightAction.onPress}
           activeOpacity={0.7}
         >
-          <Ionicons name={rightAction.icon} size={22} color={colors.textPrimary} />
+          <Ionicons name={rightAction.icon} size={20} color={colors.textPrimary} />
           {rightAction.badgeCount !== undefined && rightAction.badgeCount > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>
@@ -62,14 +62,15 @@ export const Header: React.FC<HeaderProps> = ({ title, subtitle, onBack, rightAc
 
 const styles = StyleSheet.create({
   container: {
-    height: 56,
+    paddingTop: STATUS_BAR_HEIGHT,
+    paddingBottom: 14,
+    paddingHorizontal: 20,
+    backgroundColor: '#FAF8F5',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EFE9E3',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    backgroundColor: colors.background,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
   },
   left: {
     flex: 1,
@@ -77,35 +78,50 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceWarm,
-    marginRight: spacing.md,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EFE9E3',
+    marginRight: 14,
+    shadowColor: '#4A1E36',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   titleContainer: {
     flex: 1,
   },
   title: {
-    fontSize: typography.fontSize.md,
+    fontSize: 18,
     fontWeight: '700',
-    color: colors.textPrimary,
+    color: '#1F1E1E',
+    letterSpacing: -0.2,
   },
   subtitle: {
-    fontSize: typography.fontSize.xs,
-    color: colors.textSecondary,
-    marginTop: 1,
+    fontSize: 12,
+    color: '#736B66',
+    marginTop: 2,
   },
   rightButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surfaceWarm,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EFE9E3',
     position: 'relative',
+    shadowColor: '#4A1E36',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   badge: {
     position: 'absolute',
@@ -125,4 +141,3 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
-

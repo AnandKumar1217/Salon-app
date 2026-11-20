@@ -1,7 +1,16 @@
 import { StatusBar as RNStatusBar, Platform } from 'react-native';
 
+/**
+ * Enhanced Status Bar Height with ~0.75cm notch & hardware-safe offset
+ * Modern Android status bars with punch-holes and camera notches range from 32-48dp.
+ * Adding an intentional buffer brings all top navigation and buttons ~0.75cm cleanly below
+ * the phone's clock, battery percentage, camera cutout, and Wi-Fi indicator.
+ */
+const rawAndroidHeight = RNStatusBar.currentHeight || 28;
 export const STATUS_BAR_HEIGHT =
-  Platform.OS === 'android' ? (RNStatusBar.currentHeight || 24) : 44;
+  Platform.OS === 'android'
+    ? Math.max(rawAndroidHeight, 30) + 26
+    : 54;
 
 /**
  * Glamora Design System & Theme

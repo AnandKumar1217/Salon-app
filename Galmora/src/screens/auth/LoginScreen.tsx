@@ -439,7 +439,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingTop: STATUS_BAR_HEIGHT + 16,
+    paddingTop: STATUS_BAR_HEIGHT + 4,
     paddingBottom: 36,
   },
   topBar: {
